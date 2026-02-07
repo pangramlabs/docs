@@ -1,0 +1,97 @@
+---
+title: "Plagiarism Detection"
+description: "Check text for potential plagiarism against online content"
+---
+
+## POST /
+
+Check text for potential plagiarism by comparing it against a vast database of online content.
+
+```
+POST https://plagiarism.api.pangram.com
+```
+
+### Request
+
+<ParamField body="text" type="string" required>
+  The input text to check for plagiarism.
+</ParamField>
+
+### Response
+
+<ResponseField name="text" type="string">
+  The input text that was checked.
+</ResponseField>
+
+<ResponseField name="plagiarism_detected" type="boolean">
+  Whether plagiarism was detected in the text.
+</ResponseField>
+
+<ResponseField name="plagiarized_content" type="array">
+  A list of detected plagiarized content, including source URLs and matched text.
+
+  <Expandable title="Plagiarized content object">
+    <ResponseField name="source_url" type="string">
+      The URL of the source where the match was found.
+    </ResponseField>
+    <ResponseField name="matched_text" type="string">
+      The text that matched the source.
+    </ResponseField>
+    <ResponseField name="similarity_score" type="float">
+      Similarity score for the match (0.0–1.0).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="total_sentences" type="integer">
+  Total number of sentences in the input text.
+</ResponseField>
+
+<ResponseField name="plagiarized_sentences" type="integer">
+  Number of sentences that were detected as plagiarized.
+</ResponseField>
+
+<ResponseField name="percent_plagiarized" type="float">
+  Percentage of the text that was detected as plagiarized.
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://plagiarism.api.pangram.com \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your_api_key_here" \
+  -d '{
+    "text": "The text to check for plagiarism"
+  }'
+```
+
+```python Python
+from pangram import Pangram
+
+pangram_client = Pangram()
+result = pangram_client.check_plagiarism("The text to check for plagiarism")
+```
+
+</CodeGroup>
+
+**Example Response**
+
+```json
+{
+  "text": "The text to check for plagiarism",
+  "plagiarism_detected": true,
+  "plagiarized_content": [
+    {
+      "source_url": "https://example.com/source",
+      "matched_text": "The text to check for plagiarism",
+      "similarity_score": 0.95
+    }
+  ],
+  "total_sentences": 1,
+  "plagiarized_sentences": 1,
+  "percent_plagiarized": 100.0
+}
+```

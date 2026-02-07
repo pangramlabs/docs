@@ -1,33 +1,39 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: "API Overview"
+description: "Base URL, authentication, and error handling for the Pangram REST API"
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+## Base URL
 
-## Welcome
+All AI detection endpoints use the following base URL:
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+```
+https://text.api.pangram.com
+```
 
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+The plagiarism detection endpoint uses a separate base URL:
+
+```
+https://plagiarism.api.pangram.com
+```
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+All API requests must include your API key in the `x-api-key` header:
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+{
+  "Content-Type": "application/json",
+  "x-api-key": "<your-api-key>"
+}
 ```
+
+## Error Codes
+
+| Status Code | Description |
+|---|---|
+| `400 Bad Request` | The request body is not properly formatted. |
+| `401 Unauthorized` | The `x-api-key` is missing, invalid, or does not have enough credits to process the request. |
+| `500 Internal Server Error` | There was an error processing the request. |
+
+If you are running into errors, please reach out at [support@pangram.com](mailto:support@pangram.com).

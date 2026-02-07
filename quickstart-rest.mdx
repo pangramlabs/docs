@@ -1,0 +1,121 @@
+---
+title: "REST API Quickstart"
+description: "Get started with the Pangram REST API using cURL"
+---
+
+## Authentication
+
+All requests require your API key in the `x-api-key` header.
+
+```bash
+export PANGRAM_API_KEY=<your API key>
+```
+
+## AI Detection
+
+### Main prediction (V3)
+
+Returns detailed analysis with AI-assistance detection and segment-level metrics.
+
+```bash
+curl -X POST https://text.api.pangram.com/v3 \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: $PANGRAM_API_KEY" \
+  -d '{
+    "text": "The text to analyze"
+  }'
+```
+
+**Example Response**
+
+```json
+{
+  "text": "The text to analyze",
+  "version": "3.0",
+  "headline": "AI Detected",
+  "prediction": "We are confident that this document is a mix of AI-generated, AI-assisted, and human-written content",
+  "prediction_short": "Mixed",
+  "fraction_ai": 0.70,
+  "fraction_ai_assisted": 0.20,
+  "fraction_human": 0.10,
+  "num_ai_segments": 7,
+  "num_ai_assisted_segments": 2,
+  "num_human_segments": 1,
+  "windows": [
+    {
+      "text": "The text to analyze",
+      "label": "AI-Generated",
+      "ai_assistance_score": 0.85,
+      "confidence": "High",
+      "start_index": 0,
+      "end_index": 19,
+      "word_count": 4,
+      "token_length": 5
+    }
+  ]
+}
+```
+
+Key response fields:
+
+- `fraction_ai` / `fraction_ai_assisted` / `fraction_human` — breakdown of text by authorship
+- `windows` — segment-level classifications with confidence scores
+- `headline` — summary classification (e.g., "AI Detected", "Human Written")
+
+### Dashboard link
+
+Pass `public_dashboard_link: true` to get a shareable link to the results:
+
+```bash
+curl -X POST https://text.api.pangram.com/v3 \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: $PANGRAM_API_KEY" \
+  -d '{
+    "text": "The text to analyze",
+    "public_dashboard_link": true
+  }'
+```
+
+The response will include a `dashboard_link` field with the URL.
+
+## Plagiarism Detection
+
+Check text against a database of online content. Note the different base URL.
+
+```bash
+curl -X POST https://plagiarism.api.pangram.com \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: $PANGRAM_API_KEY" \
+  -d '{
+    "text": "Text to check for plagiarism"
+  }'
+```
+
+**Example Response**
+
+```json
+{
+  "text": "Text to check for plagiarism",
+  "plagiarism_detected": true,
+  "plagiarized_content": [
+    {
+      "source_url": "https://example.com/source",
+      "matched_text": "Text to check for plagiarism",
+      "similarity_score": 0.95
+    }
+  ],
+  "total_sentences": 1,
+  "plagiarized_sentences": 1,
+  "percent_plagiarized": 100.0
+}
+```
+
+## Error Handling
+
+| Status Code | Description |
+|---|---|
+| `400 Bad Request` | The request body is not properly formatted. |
+| `401 Unauthorized` | The `x-api-key` is missing, invalid, or does not have enough credits. |
+| `500 Internal Server Error` | There was an error processing the request. |
+
+If you are running into errors, please reach out at [support@pangram.com](mailto:support@pangram.com).

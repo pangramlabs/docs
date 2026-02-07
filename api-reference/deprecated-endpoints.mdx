@@ -1,0 +1,389 @@
+---
+title: "Deprecated Endpoints"
+description: "Legacy endpoints that will be removed by April 1st, 2026"
+---
+
+<Warning>
+All endpoints on this page are deprecated and will be removed by April 1st, 2026. Use the [V3 endpoint](/api-reference/ai-detection) instead.
+</Warning>
+
+## Root Endpoint
+
+### POST /
+
+```
+POST https://text.api.pangram.com
+```
+
+Single text classification returning an AI likelihood score.
+
+**Request Body**
+
+<ParamField body="text" type="string" required>
+  The input text to classify.
+</ParamField>
+
+<ParamField body="return_ai_sentences" type="boolean" default="false">
+  If `true`, return a list of the most indicative AI sentences.
+</ParamField>
+
+**Response**
+
+<ResponseField name="ai_likelihood" type="float">
+  Classification score from 0.0 (human) to 1.0 (AI).
+</ResponseField>
+
+<ResponseField name="text" type="string">
+  The classified text.
+</ResponseField>
+
+<ResponseField name="prediction" type="string">
+  A string representing the classification.
+</ResponseField>
+
+<ResponseField name="ai_sentences" type="array">
+  List of the most indicative AI sentences. Only present when `return_ai_sentences` is `true`.
+</ResponseField>
+
+**Example Response**
+
+```json
+{
+  "text": "The text to analyze",
+  "prediction": "Likely AI",
+  "ai_likelihood": 0.92
+}
+```
+
+---
+
+## Batch Endpoint
+
+### POST /
+
+```
+POST https://text-batch.api.pangram.com
+```
+
+Classify multiple texts in a single request.
+
+**Request Body**
+
+<ParamField body="text" type="array" required>
+  An array of input texts to classify.
+</ParamField>
+
+**Response**
+
+<ResponseField name="responses" type="array">
+  The classification results as a list. Each item contains `text`, `ai_likelihood`, and `prediction`.
+</ResponseField>
+
+**Example Response**
+
+```json
+{
+  "responses": [
+    {
+      "text": "The first text to analyze",
+      "prediction": "Likely AI",
+      "ai_likelihood": 0.92
+    },
+    {
+      "text": "The second text to analyze",
+      "prediction": "Possibly AI",
+      "ai_likelihood": 0.58
+    }
+  ]
+}
+```
+
+---
+
+## Sliding Window Endpoint
+
+### POST /
+
+```
+POST https://text-sliding.api.pangram.com
+```
+
+Classify a long document using a sliding window across the full text.
+
+**Request Body**
+
+<ParamField body="text" type="string" required>
+  The input text to segment into windows and classify.
+</ParamField>
+
+<ParamField body="return_ai_sentences" type="boolean" default="false">
+  If `true`, return a list of the most indicative AI sentences.
+</ParamField>
+
+**Response**
+
+<ResponseField name="text" type="string">
+  The classified text.
+</ResponseField>
+
+<ResponseField name="ai_likelihood" type="float">
+  Classification score from 0.0 (human) to 1.0 (AI).
+</ResponseField>
+
+<ResponseField name="max_ai_likelihood" type="float">
+  Maximum AI likelihood score among all windows.
+</ResponseField>
+
+<ResponseField name="avg_ai_likelihood" type="float">
+  Average AI likelihood score among all windows.
+</ResponseField>
+
+<ResponseField name="prediction" type="string">
+  A string representing the classification.
+</ResponseField>
+
+<ResponseField name="short_prediction" type="string">
+  Short classification string (`"AI"`, `"Human"`, `"Mixed"`).
+</ResponseField>
+
+<ResponseField name="fraction_ai_content" type="float">
+  Fraction of windows classified as AI.
+</ResponseField>
+
+<ResponseField name="windows" type="array">
+  List of windows and their individual classifications.
+</ResponseField>
+
+**Example Response**
+
+```json
+{
+  "text": "Extremely long text.",
+  "prediction": "Highly likely AI",
+  "ai_likelihood": 1.0,
+  "max_ai_likelihood": 1.0,
+  "avg_ai_likelihood": 0.6,
+  "fraction_ai_content": 0.5,
+  "windows": [
+    {
+      "text": "Extremely long",
+      "ai_likelihood": 1.0,
+      "prediction": "Highly likely AI"
+    },
+    {
+      "text": "long text.",
+      "ai_likelihood": 0.2,
+      "prediction": "Unlikely AI"
+    }
+  ]
+}
+```
+
+---
+
+## Dashboard Endpoint
+
+### POST /
+
+```
+POST https://dashboard-text.api.pangram.com
+```
+
+Classify text and return a link to a dashboard page with the full result.
+
+**Request Body**
+
+<ParamField body="text" type="string" required>
+  The input text to classify.
+</ParamField>
+
+**Response**
+
+<ResponseField name="ai_likelihood" type="float">
+  Classification score from 0.0 (human) to 1.0 (AI).
+</ResponseField>
+
+<ResponseField name="prediction" type="string">
+  A string representing the classification.
+</ResponseField>
+
+<ResponseField name="short_prediction" type="string">
+  Short classification string (`"AI"`, `"Human"`, `"Mixed"`).
+</ResponseField>
+
+<ResponseField name="dashboard_link" type="string">
+  A link to the dashboard page containing the full classification result.
+</ResponseField>
+
+<ResponseField name="fraction_ai_content" type="float">
+  Fraction of windows classified as AI.
+</ResponseField>
+
+<ResponseField name="max_ai_likelihood" type="float">
+  Maximum AI likelihood score among all windows.
+</ResponseField>
+
+<ResponseField name="avg_ai_likelihood" type="float">
+  Average AI likelihood score among all windows.
+</ResponseField>
+
+<ResponseField name="windows" type="array">
+  List of windows and their individual classifications.
+</ResponseField>
+
+**Example Response**
+
+```json
+{
+  "text": "Extremely long text.",
+  "prediction": "Highly likely AI",
+  "ai_likelihood": 1.0,
+  "dashboard_link": "https://www.pangram.com/history/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "max_ai_likelihood": 1.0,
+  "avg_ai_likelihood": 0.6,
+  "fraction_ai_content": 0.5,
+  "windows": [
+    {
+      "text": "Extremely long",
+      "ai_likelihood": 1.0,
+      "prediction": "Highly likely AI"
+    },
+    {
+      "text": "long text.",
+      "ai_likelihood": 0.2,
+      "prediction": "Unlikely AI"
+    }
+  ]
+}
+```
+
+---
+
+## Extended Endpoint
+
+### POST /
+
+```
+POST https://text-extended.api.pangram.com
+```
+
+Extended analysis with adaptive boundaries and windowed results.
+
+**Request Body**
+
+<ParamField body="text" type="string" required>
+  The input text to classify with extended analysis.
+</ParamField>
+
+<ParamField body="dashboard" type="boolean" default="false">
+  Enable dashboard integration.
+</ParamField>
+
+<ParamField body="is_public" type="boolean" default="true">
+  Control visibility in dashboard.
+</ParamField>
+
+**Response**
+
+<ResponseField name="text" type="string">
+  The input text that was analyzed.
+</ResponseField>
+
+<ResponseField name="avg_ai_likelihood" type="float">
+  Weighted average AI likelihood score across all windows.
+</ResponseField>
+
+<ResponseField name="max_ai_likelihood" type="float">
+  Maximum AI likelihood score among all windows.
+</ResponseField>
+
+<ResponseField name="prediction" type="string">
+  Long-form prediction string representing the classification.
+</ResponseField>
+
+<ResponseField name="prediction_short" type="string">
+  Short-form prediction string (`"AI"`, `"Human"`, `"Mixed"`).
+</ResponseField>
+
+<ResponseField name="headline" type="string">
+  Classification headline summarizing the result.
+</ResponseField>
+
+<ResponseField name="windows" type="array">
+  List of text segments analyzed individually. Each window contains `text`, `ai_likelihood`, `label`, `confidence`, `start_index`, `end_index`, and `word_count`.
+</ResponseField>
+
+<ResponseField name="window_likelihoods" type="array">
+  AI likelihood scores for each window (list of values from 0.0 to 1.0).
+</ResponseField>
+
+<ResponseField name="window_indices" type="array">
+  Indices indicating the position of each window in the original text (list of `[start_char_index, end_char_index]`).
+</ResponseField>
+
+<ResponseField name="fraction_human" type="float">
+  Fraction of text classified as human-written (0.0–1.0).
+</ResponseField>
+
+<ResponseField name="fraction_ai" type="float">
+  Fraction of text classified as AI-written (0.0–1.0).
+</ResponseField>
+
+<ResponseField name="fraction_mixed" type="float">
+  Fraction of text classified as mixed content (0.0–1.0).
+</ResponseField>
+
+<ResponseField name="metadata" type="object">
+  Additional metadata about the analysis.
+</ResponseField>
+
+<ResponseField name="version" type="string">
+  Analysis version identifier (`"adaptive_boundaries"`).
+</ResponseField>
+
+<ResponseField name="dashboard_link" type="string">
+  Dashboard link. Only present when `dashboard` is `true`. `is_public` controls visibility.
+</ResponseField>
+
+**Example Response**
+
+```json
+{
+  "text": "The text to analyze with extended classification",
+  "avg_ai_likelihood": 0.75,
+  "max_ai_likelihood": 0.92,
+  "prediction": "Primarily AI-generated, or heavily AI-assisted",
+  "prediction_short": "AI",
+  "headline": "AI Detected",
+  "windows": [
+    {
+      "text": "The text to analyze",
+      "ai_likelihood": 0.85,
+      "label": "AI",
+      "confidence": "Medium",
+      "start_index": 0,
+      "end_index": 19,
+      "word_count": 4
+    },
+    {
+      "text": "with extended classification",
+      "ai_likelihood": 0.65,
+      "label": "AI",
+      "confidence": "Low",
+      "start_index": 20,
+      "end_index": 47,
+      "word_count": 3
+    }
+  ],
+  "window_likelihoods": [0.85, 0.65],
+  "window_indices": [[0, 19], [20, 47]],
+  "fraction_human": 0.25,
+  "fraction_ai": 0.70,
+  "fraction_mixed": 0.05,
+  "metadata": {
+    "request_id": "123e4567-e89b-12d3-a456-426614174000"
+  },
+  "version": "adaptive_boundaries",
+  "dashboard_link": "https://www.pangram.com/history/123e4567-e89b-12d3-a456-426614174000"
+}
+```

@@ -1,0 +1,165 @@
+---
+title: "AI Detection"
+description: "Detect AI-generated and AI-assisted text using the V3 endpoint"
+---
+
+## POST /v3
+
+Classify text as AI-generated, AI-assisted, or human-written with segment-level analysis.
+
+```
+POST https://text.api.pangram.com/v3
+```
+
+### Request
+
+<ParamField body="text" type="string" required>
+  The input text to analyze.
+</ParamField>
+
+<ParamField body="public_dashboard_link" type="boolean" default="false">
+  Whether to include a public dashboard link in the response.
+</ParamField>
+
+### Response
+
+<ResponseField name="text" type="string">
+  The input text that was analyzed.
+</ResponseField>
+
+<ResponseField name="version" type="string">
+  The API version identifier (e.g., `"3.0"`).
+</ResponseField>
+
+<ResponseField name="headline" type="string">
+  Classification headline summarizing the result.
+</ResponseField>
+
+<ResponseField name="prediction" type="string">
+  Long-form prediction string describing the classification.
+</ResponseField>
+
+<ResponseField name="prediction_short" type="string">
+  Short-form prediction string (e.g., `"AI"`, `"AI-Assisted"`, `"Human"`, `"Mixed"`).
+</ResponseField>
+
+<ResponseField name="fraction_ai" type="float">
+  Fraction of text classified as AI-written (0.0–1.0).
+</ResponseField>
+
+<ResponseField name="fraction_ai_assisted" type="float">
+  Fraction of text classified as AI-assisted (0.0–1.0).
+</ResponseField>
+
+<ResponseField name="fraction_human" type="float">
+  Fraction of text classified as human-written (0.0–1.0).
+</ResponseField>
+
+<ResponseField name="num_ai_segments" type="integer">
+  Number of text segments classified as AI.
+</ResponseField>
+
+<ResponseField name="num_ai_assisted_segments" type="integer">
+  Number of text segments classified as AI-assisted.
+</ResponseField>
+
+<ResponseField name="num_human_segments" type="integer">
+  Number of text segments classified as human.
+</ResponseField>
+
+<ResponseField name="dashboard_link" type="string">
+  A link to the dashboard page containing the full classification result. Only present when `public_dashboard_link` is `true`.
+</ResponseField>
+
+<ResponseField name="windows" type="array">
+  List of text segments (windows) analyzed individually.
+
+  <Expandable title="Window object properties">
+    <ResponseField name="text" type="string">
+      The window text.
+    </ResponseField>
+    <ResponseField name="label" type="string">
+      Descriptive classification label (e.g., `"AI-Generated"`, `"Moderately AI-Assisted"`).
+    </ResponseField>
+    <ResponseField name="ai_assistance_score" type="float">
+      Score detailing the level of AI assistance (0.0–1.0), where 0 means no AI assistance and 1.0 means AI-generated.
+    </ResponseField>
+    <ResponseField name="confidence" type="string">
+      Confidence level for the classification (`"High"`, `"Medium"`, `"Low"`).
+    </ResponseField>
+    <ResponseField name="start_index" type="integer">
+      Starting character index in the original text.
+    </ResponseField>
+    <ResponseField name="end_index" type="integer">
+      Ending character index in the original text.
+    </ResponseField>
+    <ResponseField name="word_count" type="integer">
+      Number of words in the window.
+    </ResponseField>
+    <ResponseField name="token_length" type="integer">
+      Token length of the window.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://text.api.pangram.com/v3 \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your_api_key_here" \
+  -d '{
+    "text": "The text to analyze with V3 classification"
+  }'
+```
+
+```python Python
+from pangram import Pangram
+
+pangram_client = Pangram()
+result = pangram_client.predict("The text to analyze with V3 classification")
+```
+
+</CodeGroup>
+
+**Example Response**
+
+```json
+{
+  "text": "The text to analyze with V3 classification",
+  "version": "3.0",
+  "headline": "AI Detected",
+  "prediction": "We are confident that this document is a mix of AI-generated, AI-assisted, and human-written content",
+  "prediction_short": "Mixed",
+  "fraction_ai": 0.70,
+  "fraction_ai_assisted": 0.20,
+  "fraction_human": 0.10,
+  "num_ai_segments": 7,
+  "num_ai_assisted_segments": 2,
+  "num_human_segments": 1,
+  "windows": [
+    {
+      "text": "The text to analyze",
+      "label": "AI-Generated",
+      "ai_assistance_score": 0.85,
+      "confidence": "High",
+      "start_index": 0,
+      "end_index": 19,
+      "word_count": 4,
+      "token_length": 5
+    },
+    {
+      "text": "with V3 classification",
+      "label": "Moderately AI-Assisted",
+      "ai_assistance_score": 0.45,
+      "confidence": "Medium",
+      "start_index": 20,
+      "end_index": 49,
+      "word_count": 4,
+      "token_length": 5
+    }
+  ]
+}
+```
