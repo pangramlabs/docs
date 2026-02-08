@@ -1,19 +1,8 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M9.06145 23.1079C5.26816 22.3769 -3.39077 20.6274 1.4173 5.06384C9.6344 6.09939 16.9728 14.0644 9.06145 23.1079Z" fill="url(#paint0_linear_17557_2021)"/>
-<path d="M8.91928 23.0939C5.27642 21.2223 0.78371 4.20891 17.0071 0C20.7569 7.19341 19.6212 16.5452 8.91928 23.0939Z" fill="url(#paint1_linear_17557_2021)"/>
-<path d="M8.91388 23.0788C8.73534 19.8817 10.1585 9.08525 23.5699 13.1107C23.1812 20.1229 18.984 26.4182 8.91388 23.0788Z" fill="url(#paint2_linear_17557_2021)"/>
-<defs>
-<linearGradient id="paint0_linear_17557_2021" x1="3.77557" y1="5.91571" x2="5.23185" y2="21.5589" gradientUnits="userSpaceOnUse">
-<stop stop-color="#18E299"/>
-<stop offset="1" stop-color="#15803D"/>
-</linearGradient>
-<linearGradient id="paint1_linear_17557_2021" x1="12.1711" y1="-0.718425" x2="10.1897" y2="22.9832" gradientUnits="userSpaceOnUse">
-<stop stop-color="#16A34A"/>
-<stop offset="1" stop-color="#4ADE80"/>
-</linearGradient>
-<linearGradient id="paint2_linear_17557_2021" x1="23.1327" y1="15.353" x2="9.33841" y2="18.5196" gradientUnits="userSpaceOnUse">
-<stop stop-color="#4ADE80"/>
-<stop offset="1" stop-color="#0D9373"/>
-</linearGradient>
-</defs>
+<svg width="149" height="165" viewBox="0 0 149 165" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M32.0912 70.635L0.168457 91.8733V0.0688477L32.0912 70.635ZM32.0912 70.635L0.168457 91.8733L43.0726 94.9098L32.0912 70.635ZM0.168457 91.8733L74.3473 164.045L43.0726 94.9098L0.168457 91.8733Z" fill="#FECAB9"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M74.3481 164.045L105.623 94.9098L148.527 91.8733L74.3481 164.045Z" fill="#FECAB9"/>
+<path d="M148.527 91.8733L116.604 70.635L105.623 94.9098L148.527 91.8733Z" fill="#FECAB9"/>
+<path d="M116.604 70.635L148.527 91.8733V0.0688477L116.604 70.635Z" fill="#FECAB9"/>
+<path d="M74.3473 42.5218L0.168457 0.0688477L74.3457 164.043V42.5228L74.3473 42.5218Z" fill="#FF6106"/>
+<path d="M74.3493 42.5228L74.3473 42.5218L148.527 0.0688477L74.3493 164.043V42.5228Z" fill="#FF6106"/>
 </svg>
