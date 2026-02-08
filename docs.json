@@ -67,6 +67,21 @@
       }
     ]
   },
+  "api": {
+    "mdx": {
+      "auth": {
+        "method": "key",
+        "name": "x-api-key"
+      }
+    },
+    "playground": {
+      "display": "interactive"
+    },
+    "examples": {
+      "languages": ["curl", "python"],
+      "defaults": "required"
+    }
+  },
   "footer": {
     "socials": {}
   }

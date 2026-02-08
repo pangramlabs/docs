@@ -3,95 +3,97 @@ title: "Python Quickstart"
 description: "Get started with the Pangram Python SDK in minutes"
 ---
 
-## Installation
+<Steps>
+  <Step title="Install the SDK">
+    ```bash
+    pip install pangram-sdk
+    ```
+  </Step>
 
-```bash
-pip install pangram-sdk
-```
+  <Step title="Configure your API key">
+    You can provide your API key in two ways.
 
-## API Key Setup
+    **Option 1: Environment variable**
 
-You can provide your API key in two ways.
+    ```bash
+    export PANGRAM_API_KEY=<your API key>
+    ```
 
-**Option 1: Environment variable**
+    **Option 2: Pass directly to the constructor**
 
-```bash
-export PANGRAM_API_KEY=<your API key>
-```
+    ```python
+    from pangram import Pangram
 
-**Option 2: Pass directly to the constructor**
+    pangram_client = Pangram(api_key="your-api-key")
+    ```
+  </Step>
 
-```python
-from pangram import Pangram
+  <Step title="Detect AI-generated text">
+    ### Main prediction
 
-pangram_client = Pangram(api_key="your-api-key")
-```
+    Returns detailed analysis with AI-assistance detection and segment-level metrics.
 
-## AI Detection
+    ```python
+    from pangram import Pangram
 
-### Main prediction
+    pangram_client = Pangram()
+    result = pangram_client.predict(text)
 
-Returns detailed analysis with AI-assistance detection and segment-level metrics.
+    # V3 analysis with AI-assistance detection
+    fraction_ai = result['fraction_ai']
+    fraction_ai_assisted = result['fraction_ai_assisted']
+    fraction_human = result['fraction_human']
+    num_ai_segments = result['num_ai_segments']
 
-```python
-from pangram import Pangram
+    # Access individual window classifications
+    for window in result['windows']:
+        label = window['label']
+        ai_assistance_score = window['ai_assistance_score']
+        confidence = window['confidence']
+    ```
 
-pangram_client = Pangram()
-result = pangram_client.predict(text)
+    ### Short prediction
 
-# V3 analysis with AI-assistance detection
-fraction_ai = result['fraction_ai']
-fraction_ai_assisted = result['fraction_ai_assisted']
-fraction_human = result['fraction_human']
-num_ai_segments = result['num_ai_segments']
+    Single Pangram model prediction, cuts off text at 512 tokens.
 
-# Access individual window classifications
-for window in result['windows']:
-    label = window['label']
-    ai_assistance_score = window['ai_assistance_score']
-    confidence = window['confidence']
-```
+    ```python
+    from pangram import Pangram
 
-### Short prediction
+    pangram_client = Pangram()
+    result = pangram_client.predict_short(text)
 
-Single Pangram model prediction, cuts off text at 512 tokens.
+    # Score in range [0, 1] where 0 is human-written and 1 is AI-generated
+    score = result['ai_likelihood']
+    ```
+  </Step>
 
-```python
-from pangram import Pangram
+  <Step title="Check for plagiarism">
+    The plagiarism detection API checks text against a vast database of online content:
 
-pangram_client = Pangram()
-result = pangram_client.predict_short(text)
+    ```python
+    from pangram import Pangram
 
-# Score in range [0, 1] where 0 is human-written and 1 is AI-generated
-score = result['ai_likelihood']
-```
+    pangram_client = Pangram()
 
-## Plagiarism Detection
+    text = "Text to check for plagiarism"
+    result = pangram_client.check_plagiarism(text)
 
-The plagiarism detection API checks text against a vast database of online content:
+    if result['plagiarism_detected']:
+        print(f"Plagiarism detected! {result['percent_plagiarized']}% of the text may be plagiarized.")
+        for content in result['plagiarized_content']:
+            print(f"Found match at {content['source_url']}")
+            print(f"Matched text: {content['matched_text']}")
+    ```
 
-```python
-from pangram import Pangram
+    The response includes:
 
-pangram_client = Pangram()
-
-text = "Text to check for plagiarism"
-result = pangram_client.check_plagiarism(text)
-
-if result['plagiarism_detected']:
-    print(f"Plagiarism detected! {result['percent_plagiarized']}% of the text may be plagiarized.")
-    for content in result['plagiarized_content']:
-        print(f"Found match at {content['source_url']}")
-        print(f"Matched text: {content['matched_text']}")
-```
-
-The response includes:
-
-- Whether plagiarism was detected
-- List of plagiarized content with source URLs
-- Total number of sentences checked
-- List of plagiarized sentences
-- Percentage of text that was plagiarized
+    - Whether plagiarism was detected
+    - List of plagiarized content with source URLs
+    - Total number of sentences checked
+    - List of plagiarized sentences
+    - Percentage of text that was plagiarized
+  </Step>
+</Steps>
 
 ## Deprecated Methods
 

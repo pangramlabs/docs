@@ -218,15 +218,15 @@ Raises `ValueError` if the API returns an error.
 The following methods are deprecated and will be removed by April 1st, 2026. Use `predict()` instead.
 </Warning>
 
-### predict_extended()
+### predict_extended() <Badge color="red">Deprecated</Badge>
 
-Extended analysis with adaptive boundaries. **Deprecated** — use `predict()` instead.
+Extended analysis with adaptive boundaries. Use `predict()` instead.
 
 ```python
 result = client.predict_extended(text)
 ```
 
-### batch_predict()
+### batch_predict() <Badge color="red">Deprecated</Badge>
 
 Classify a batch of texts. Iterates through the batch and calls `predict()` for each text.
 
@@ -234,9 +234,9 @@ Classify a batch of texts. Iterates through the batch and calls `predict()` for 
 results = client.batch_predict(["text one", "text two"])
 ```
 
-### predict_sliding_window()
+### predict_sliding_window() <Badge color="red">Deprecated</Badge>
 
-Classify a long document using a sliding window. **Deprecated** — use `predict()` instead.
+Classify a long document using a sliding window. Use `predict()` instead.
 
 ```python
 result = client.predict_sliding_window(text)
