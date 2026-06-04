@@ -1,13 +1,39 @@
 ---
 title: "Deprecated Endpoints"
-description: "Legacy endpoints that will be removed by April 1st, 2026"
+description: "Legacy AI detection endpoints replaced by the async inference API"
 ---
 
 <Warning>
-All endpoints on this page are deprecated and will be removed by April 1st, 2026. Use the [V3 endpoint](/api-reference/ai-detection) instead.
+All endpoints on this page are legacy AI detection endpoints. Use the current [async AI detection API](/api-reference/ai-detection) instead.
 </Warning>
 
-## Root Endpoint <Badge color="red">Deprecated</Badge> <Badge color="yellow">Removal: April 2026</Badge>
+## Synchronous V3 Endpoint <Badge color="red">Deprecated</Badge> <Badge color="yellow">Legacy</Badge>
+
+### POST /v3
+
+```
+POST https://text.api.pangram.com/v3
+```
+
+Synchronous V3 classification endpoint. Use `POST /task` and `GET /task/{task_id}` on `https://text.external-api.pangram.com` instead.
+
+**Request Body**
+
+<ParamField body="text" type="string" required>
+  The input text to analyze.
+</ParamField>
+
+<ParamField body="public_dashboard_link" type="boolean" default="false">
+  Whether to include a public dashboard link in the response.
+</ParamField>
+
+**Response**
+
+Returns the completed AI detection result directly, including `prediction`, `prediction_short`, authorship fractions, segment counts, and `windows`.
+
+---
+
+## Root Endpoint <Badge color="red">Deprecated</Badge> <Badge color="yellow">Legacy</Badge>
 
 ### POST /
 
@@ -57,7 +83,7 @@ Single text classification returning an AI likelihood score.
 
 ---
 
-## Batch Endpoint <Badge color="red">Deprecated</Badge> <Badge color="yellow">Removal: April 2026</Badge>
+## Batch Endpoint <Badge color="red">Deprecated</Badge> <Badge color="yellow">Legacy</Badge>
 
 ### POST /
 
@@ -100,7 +126,7 @@ Classify multiple texts in a single request.
 
 ---
 
-## Sliding Window Endpoint <Badge color="red">Deprecated</Badge> <Badge color="yellow">Removal: April 2026</Badge>
+## Sliding Window Endpoint <Badge color="red">Deprecated</Badge> <Badge color="yellow">Legacy</Badge>
 
 ### POST /
 
@@ -181,7 +207,7 @@ Classify a long document using a sliding window across the full text.
 
 ---
 
-## Dashboard Endpoint <Badge color="red">Deprecated</Badge> <Badge color="yellow">Removal: April 2026</Badge>
+## Dashboard Endpoint <Badge color="red">Deprecated</Badge> <Badge color="yellow">Legacy</Badge>
 
 ### POST /
 
@@ -259,7 +285,7 @@ Classify text and return a link to a dashboard page with the full result.
 
 ---
 
-## Extended Endpoint <Badge color="red">Deprecated</Badge> <Badge color="yellow">Removal: April 2026</Badge>
+## Extended Endpoint <Badge color="red">Deprecated</Badge> <Badge color="yellow">Legacy</Badge>
 
 ### POST /
 

@@ -32,14 +32,16 @@ description: "Get started with the Pangram Python SDK in minutes"
     ### Main prediction
 
     Returns detailed analysis with AI-assistance detection and segment-level metrics.
+    The SDK submits an async inference task and waits for the completed result before returning.
 
     ```python
     from pangram import Pangram
 
     pangram_client = Pangram()
     result = pangram_client.predict(text)
+    stage = result['stage']  # "STAGE_SUCCESS" after predict() completes.
 
-    # V3 analysis with AI-assistance detection
+    # Analysis with AI-assistance detection.
     fraction_ai = result['fraction_ai']
     fraction_ai_assisted = result['fraction_ai_assisted']
     fraction_human = result['fraction_human']
@@ -52,18 +54,14 @@ description: "Get started with the Pangram Python SDK in minutes"
         confidence = window['confidence']
     ```
 
-    ### Short prediction
-
-    Single Pangram model prediction, cuts off text at 512 tokens.
+    ### Dashboard link
 
     ```python
     from pangram import Pangram
 
     pangram_client = Pangram()
-    result = pangram_client.predict_short(text)
-
-    # Score in range [0, 1] where 0 is human-written and 1 is AI-generated
-    score = result['ai_likelihood']
+    result = pangram_client.predict(text, public_dashboard_link=True)
+    dashboard_link = result['dashboard_link']
     ```
   </Step>
 
@@ -98,9 +96,8 @@ description: "Get started with the Pangram Python SDK in minutes"
 ## Deprecated Methods
 
 <Warning>
-The following methods are deprecated and will be removed by April 1st, 2026. Use `predict()` instead.
+The following SDK compatibility methods are deprecated and may be removed on August 1, 2026. Use `predict()` instead.
 </Warning>
 
-- `predict_extended()` — Use `predict()` instead
-- `batch_predict()` — Use `predict()` instead
-- `predict_sliding_window()` — Use `predict()` instead
+- `predict_short()` — Forwards to `predict()` and returns the current async result schema
+- `batch_predict()` — Calls `predict()` once per input text

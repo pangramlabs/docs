@@ -1,21 +1,21 @@
 ---
 title: "AI Detection"
-description: "Detect AI-generated and AI-assisted text using the V3 endpoint"
-api: POST https://text.api.pangram.com/v3
+description: "Detect AI-generated and AI-assisted text using the async inference API"
+api: POST https://text.external-api.pangram.com/task
 ---
 
 <Badge color="green">Current</Badge>
 
-<Update label="V3 API" description="Current version">
-  The V3 endpoint replaces all previous detection endpoints with improved AI-assistance detection and segment-level analysis.
+<Update label="Async inference API" description="Current version">
+  The current AI detection API creates an async task and returns a task ID. Poll the task endpoint until it reaches `STAGE_SUCCESS` or `STAGE_FAILED`.
 </Update>
 
-## POST /v3
+## POST /task
 
-Classify text as AI-generated, AI-assisted, or human-written with segment-level analysis.
+Create an async AI detection task.
 
 ```
-POST https://text.api.pangram.com/v3
+POST https://text.external-api.pangram.com/task
 ```
 
 ### Request
@@ -25,61 +25,122 @@ POST https://text.api.pangram.com/v3
 </ParamField>
 
 <ParamField body="public_dashboard_link" type="boolean" default="false">
-  Whether to include a public dashboard link in the response.
+  Whether to include a public dashboard link in the completed response.
 </ParamField>
 
 ### Response
 
+<ResponseField name="task_id" type="string">
+  The ID of the async inference task.
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://text.external-api.pangram.com/task \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your_api_key_here" \
+  -d '{
+    "text": "The text to analyze with Pangram",
+    "public_dashboard_link": false
+  }'
+```
+
+```python Python SDK
+from pangram import Pangram
+
+pangram_client = Pangram()
+result = pangram_client.predict("The text to analyze with Pangram")
+```
+
+</CodeGroup>
+
+**Example Response**
+
+```json
+{
+  "task_id": "123e4567-e89b-12d3-a456-426614174000"
+}
+```
+
+---
+
+## GET /task/{task_id}
+
+Fetch the current status or completed result for an AI detection task.
+
+```
+GET https://text.external-api.pangram.com/task/{task_id}
+```
+
+### Request
+
+<ParamField path="task_id" type="string" required>
+  The task ID returned by `POST /task`.
+</ParamField>
+
+### Response
+
+<ResponseField name="task_id" type="string">
+  The ID of the async inference task. Present while the task is in progress.
+</ResponseField>
+
+<ResponseField name="stage" type="string">
+  Current task stage. Terminal stages are `STAGE_SUCCESS` and `STAGE_FAILED`.
+</ResponseField>
+
 <ResponseField name="text" type="string">
-  The input text that was analyzed.
+  The input text that was analyzed. Present on success.
 </ResponseField>
 
 <ResponseField name="version" type="string">
-  The API version identifier (e.g., `"3.0"`).
+  The API version identifier (e.g., `"3.0"`). Present on success.
 </ResponseField>
 
 <ResponseField name="headline" type="string">
-  Classification headline summarizing the result.
+  Classification headline summarizing the result. Present on success.
 </ResponseField>
 
 <ResponseField name="prediction" type="string">
-  Long-form prediction string describing the classification.
+  Long-form prediction string describing the classification. Present on success.
 </ResponseField>
 
 <ResponseField name="prediction_short" type="string">
-  Short-form prediction string (e.g., `"AI"`, `"AI-Assisted"`, `"Human"`, `"Mixed"`).
+  Short-form prediction string (e.g., `"AI"`, `"AI-Assisted"`, `"Human"`, `"Mixed"`). Present on success.
 </ResponseField>
 
 <ResponseField name="fraction_ai" type="float">
-  Fraction of text classified as AI-written (0.0–1.0).
+  Fraction of text classified as AI-written (0.0–1.0). Present on success.
 </ResponseField>
 
 <ResponseField name="fraction_ai_assisted" type="float">
-  Fraction of text classified as AI-assisted (0.0–1.0).
+  Fraction of text classified as AI-assisted (0.0–1.0). Present on success.
 </ResponseField>
 
 <ResponseField name="fraction_human" type="float">
-  Fraction of text classified as human-written (0.0–1.0).
+  Fraction of text classified as human-written (0.0–1.0). Present on success.
 </ResponseField>
 
 <ResponseField name="num_ai_segments" type="integer">
-  Number of text segments classified as AI.
+  Number of text segments classified as AI. Present on success.
 </ResponseField>
 
 <ResponseField name="num_ai_assisted_segments" type="integer">
-  Number of text segments classified as AI-assisted.
+  Number of text segments classified as AI-assisted. Present on success.
 </ResponseField>
 
 <ResponseField name="num_human_segments" type="integer">
-  Number of text segments classified as human.
+  Number of text segments classified as human. Present on success.
 </ResponseField>
 
 <ResponseField name="dashboard_link" type="string">
-  A link to the dashboard page containing the full classification result. Only present when `public_dashboard_link` is `true`.
+  A link to the dashboard page containing the full classification result. Present on success when `public_dashboard_link` is `true`.
 </ResponseField>
 
 <ResponseField name="windows" type="array">
-  List of text segments (<Tooltip tip="The text is divided into overlapping segments (windows) that are each classified independently, enabling granular detection across long documents.">windows</Tooltip>) analyzed individually.
+  List of text segments (<Tooltip tip="The text is divided into overlapping segments (windows) that are each classified independently, enabling granular detection across long documents.">windows</Tooltip>) analyzed individually. Present on success.
 
   <Expandable title="Window object properties">
     <ResponseField name="text" type="string">
@@ -111,34 +172,29 @@ POST https://text.api.pangram.com/v3
 
 ### Example
 
-<CodeGroup>
-
 ```bash cURL
-curl -X POST https://text.api.pangram.com/v3 \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: your_api_key_here" \
-  -d '{
-    "text": "The text to analyze with V3 classification"
-  }'
+curl -X GET https://text.external-api.pangram.com/task/123e4567-e89b-12d3-a456-426614174000 \
+  -H "x-api-key: your_api_key_here"
 ```
 
-```python Python
-from pangram import Pangram
-
-pangram_client = Pangram()
-result = pangram_client.predict("The text to analyze with V3 classification")
-```
-
-</CodeGroup>
-
-**Example Response**
+**In-Progress Response**
 
 ```json
 {
-  "text": "The text to analyze with V3 classification",
+  "task_id": "123e4567-e89b-12d3-a456-426614174000",
+  "stage": "STAGE_PREPROCESSING"
+}
+```
+
+**Success Response**
+
+```json
+{
+  "stage": "STAGE_SUCCESS",
+  "text": "The text to analyze with Pangram",
   "version": "3.0",
   "headline": "AI Detected",
-  "prediction": "We are confident that this document is a mix of AI-generated, AI-assisted, and human-written content",
+  "prediction": "We are confident that this document contains AI-generated or AI-assisted content.",
   "prediction_short": "Mixed",
   "fraction_ai": 0.70,
   "fraction_ai_assisted": 0.20,
@@ -146,6 +202,7 @@ result = pangram_client.predict("The text to analyze with V3 classification")
   "num_ai_segments": 7,
   "num_ai_assisted_segments": 2,
   "num_human_segments": 1,
+  "dashboard_link": "https://www.pangram.com/history/123e4567-e89b-12d3-a456-426614174000",
   "windows": [
     {
       "text": "The text to analyze",
@@ -158,15 +215,35 @@ result = pangram_client.predict("The text to analyze with V3 classification")
       "token_length": 5
     },
     {
-      "text": "with V3 classification",
+      "text": "with Pangram",
       "label": "Moderately AI-Assisted",
       "ai_assistance_score": 0.45,
       "confidence": "Medium",
       "start_index": 20,
-      "end_index": 49,
-      "word_count": 4,
-      "token_length": 5
+      "end_index": 32,
+      "word_count": 2,
+      "token_length": 3
     }
   ]
+}
+```
+
+**Failed Response**
+
+```json
+{
+  "stage": "STAGE_FAILED",
+  "text": "",
+  "version": "",
+  "headline": "preprocessing: Input text contains no valid text after preprocessing",
+  "prediction": "",
+  "prediction_short": "",
+  "fraction_ai": 0.0,
+  "fraction_ai_assisted": 0.0,
+  "fraction_human": 0.0,
+  "num_ai_segments": 0,
+  "num_ai_assisted_segments": 0,
+  "num_human_segments": 0,
+  "windows": []
 }
 ```

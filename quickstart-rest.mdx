@@ -12,17 +12,16 @@ description: "Get started with the Pangram REST API using cURL"
     ```
   </Step>
 
-  <Step title="Detect AI-generated text">
-    ### Main prediction (V3)
-
-    Returns detailed analysis with AI-assistance detection and segment-level metrics.
+  <Step title="Submit an AI detection task">
+    Pangram AI detection uses an async task API. Submit text to create a task.
 
     ```bash
-    curl -X POST https://text.api.pangram.com/v3 \
+    curl -X POST https://text.external-api.pangram.com/task \
       -H "Content-Type: application/json" \
       -H "x-api-key: $PANGRAM_API_KEY" \
       -d '{
-        "text": "The text to analyze"
+        "text": "The text to analyze",
+        "public_dashboard_link": false
       }'
     ```
 
@@ -30,6 +29,24 @@ description: "Get started with the Pangram REST API using cURL"
 
     ```json
     {
+      "task_id": "123e4567-e89b-12d3-a456-426614174000"
+    }
+    ```
+  </Step>
+
+  <Step title="Poll for the completed result">
+    Poll the task endpoint until `stage` is `STAGE_SUCCESS` or `STAGE_FAILED`.
+
+    ```bash
+    curl -X GET https://text.external-api.pangram.com/task/123e4567-e89b-12d3-a456-426614174000 \
+      -H "x-api-key: $PANGRAM_API_KEY"
+    ```
+
+    **Example Success Response**
+
+    ```json
+    {
+      "stage": "STAGE_SUCCESS",
       "text": "The text to analyze",
       "version": "3.0",
       "headline": "AI Detected",
@@ -58,16 +75,17 @@ description: "Get started with the Pangram REST API using cURL"
 
     Key response fields:
 
+    - `stage` — terminal task stage for completed results
     - `fraction_ai` / `fraction_ai_assisted` / `fraction_human` — breakdown of text by authorship
     - `windows` — segment-level classifications with confidence scores
-    - `headline` — summary classification (e.g., "AI Detected", "Human Written")
+    - `headline` — summary classification, such as `"AI Detected"` or `"Human Written"`
+  </Step>
 
-    ### Dashboard link
-
-    Pass `public_dashboard_link: true` to get a shareable link to the results:
+  <Step title="Request a dashboard link">
+    Pass `public_dashboard_link: true` when submitting the task to get a shareable link in the completed result.
 
     ```bash
-    curl -X POST https://text.api.pangram.com/v3 \
+    curl -X POST https://text.external-api.pangram.com/task \
       -H "Content-Type: application/json" \
       -H "x-api-key: $PANGRAM_API_KEY" \
       -d '{
@@ -75,8 +93,6 @@ description: "Get started with the Pangram REST API using cURL"
         "public_dashboard_link": true
       }'
     ```
-
-    The response will include a `dashboard_link` field with the URL.
   </Step>
 
   <Step title="Check for plagiarism">
@@ -117,7 +133,12 @@ description: "Get started with the Pangram REST API using cURL"
 | Status Code | Description |
 |---|---|
 | `400 Bad Request` | The request body is not properly formatted. |
-| `401 Unauthorized` | The `x-api-key` is missing, invalid, or does not have enough credits. |
+| `401 Unauthorized` | The `x-api-key` is missing or invalid. |
+| `402 Payment Required` | The account has insufficient credits. |
+| `403 Forbidden` | The API key does not own the requested task. |
+| `404 Not Found` | The requested task does not exist. |
+| `422 Unprocessable Entity` | The input text is invalid. |
+| `429 Too Many Requests` | The API key exceeds its configured rate limit. |
 | `500 Internal Server Error` | There was an error processing the request. |
 
 If you are running into errors, please reach out at [support@pangram.com](mailto:support@pangram.com).

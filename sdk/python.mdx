@@ -9,9 +9,11 @@ description: "Reference for the Pangram Python client library"
 pip install pangram-sdk
 ```
 
-## PangramText
+## Pangram
 
 The main client class for interacting with the Pangram Labs API.
+
+`PangramText` remains available for legacy imports, but `Pangram` is the recommended client name.
 
 ### Constructor
 
@@ -31,10 +33,15 @@ Raises `ValueError` if the API key is not provided and not set in the environmen
 
 ### predict()
 
-Classify text as AI-generated, AI-assisted, or human-written using the V3 API. Returns analysis with windowed, segment-level results.
+Classify text as AI-generated, AI-assisted, or human-written. `predict()` submits an async inference task, polls until the task completes, and returns the completed task payload.
 
 ```python
-result = client.predict(text, public_dashboard_link=False)
+result = client.predict(
+    text,
+    public_dashboard_link=False,
+    timeout=300,
+    poll_interval=0.5,
+)
 ```
 
 **Parameters**
@@ -44,12 +51,24 @@ result = client.predict(text, public_dashboard_link=False)
 </ParamField>
 
 <ParamField body="public_dashboard_link" type="boolean" default="false">
-  Whether to include a public dashboard link in the response.
+  Whether to include a public dashboard link in the completed response.
+</ParamField>
+
+<ParamField body="timeout" type="float" default="300">
+  Maximum number of seconds to wait for the async task to complete.
+</ParamField>
+
+<ParamField body="poll_interval" type="float" default="0.5">
+  Number of seconds to wait between polling attempts. Values below `0.1` are clamped to `0.1`.
 </ParamField>
 
 **Returns**
 
-A dictionary with the following fields:
+A dictionary with the following fields after the task reaches `STAGE_SUCCESS`:
+
+<ResponseField name="stage" type="string">
+  Terminal async task stage. Successful responses return `"STAGE_SUCCESS"`.
+</ResponseField>
 
 <ResponseField name="text" type="string">
   The input text.
@@ -130,39 +149,23 @@ A dictionary with the following fields:
   </Expandable>
 </ResponseField>
 
-Raises `ValueError` if the API returns an error.
+Raises `ValueError` if the API returns an error, the task fails, or the response is invalid. Raises `TimeoutError` if the task does not complete before `timeout`.
 
 ---
 
-### predict_short()
+### predict_with_dashboard_link()
 
-Classify text using the short endpoint. Cuts off text at 512 tokens.
+Classify text and include a public dashboard link in the completed response.
 
 ```python
-result = client.predict_short(text)
+result = client.predict_with_dashboard_link(text)
 ```
 
-**Parameters**
+This is equivalent to:
 
-<ParamField body="text" type="string" required>
-  The text to be classified.
-</ParamField>
-
-**Returns**
-
-A dictionary with the following fields:
-
-<ResponseField name="text" type="string">
-  The input text.
-</ResponseField>
-
-<ResponseField name="ai_likelihood" type="float">
-  Classification score from 0.0 (human) to 1.0 (AI).
-</ResponseField>
-
-<ResponseField name="prediction" type="string">
-  A string representing the classification.
-</ResponseField>
+```python
+result = client.predict(text, public_dashboard_link=True)
+```
 
 ---
 
@@ -215,29 +218,25 @@ Raises `ValueError` if the API returns an error.
 ## Deprecated Methods
 
 <Warning>
-The following methods are deprecated and will be removed by April 1st, 2026. Use `predict()` instead.
+The following SDK compatibility methods are deprecated and may be removed on August 1, 2026. Use `predict()` instead.
 </Warning>
 
-### predict_extended() <Badge color="red">Deprecated</Badge>
+### predict_short() <Badge color="red">Deprecated</Badge>
 
-Extended analysis with adaptive boundaries. Use `predict()` instead.
+Forwards to `predict()` and returns the current async result schema.
 
 ```python
-result = client.predict_extended(text)
+result = client.predict_short(text)
 ```
 
 ### batch_predict() <Badge color="red">Deprecated</Badge>
 
-Classify a batch of texts. Iterates through the batch and calls `predict()` for each text.
+Calls `predict()` once per input text.
 
 ```python
 results = client.batch_predict(["text one", "text two"])
 ```
 
-### predict_sliding_window() <Badge color="red">Deprecated</Badge>
+## Removed Legacy Methods
 
-Classify a long document using a sliding window. Use `predict()` instead.
-
-```python
-result = client.predict_sliding_window(text)
-```
+`predict_extended()` and `predict_sliding_window()` are no longer part of `pangram-sdk` 0.2.x. Use `predict()` for current AI detection and segment-level results.
