@@ -3,12 +3,12 @@ title: "API Overview"
 description: "Base URL, authentication, and error handling for the Pangram REST API"
 ---
 
-## Base URL
+## Base URLs
 
-All AI detection endpoints use the following base URL:
+AI detection uses the following base URL:
 
 ```
-https://text.api.pangram.com
+https://text.external-api.pangram.com
 ```
 
 The plagiarism detection endpoint uses a separate base URL:
@@ -19,12 +19,12 @@ https://plagiarism.api.pangram.com
 
 ## Authentication
 
-All API requests must include your API key in the `x-api-key` header:
+All API requests must include your API key in the `x-api-key` header.
 
 <Tabs>
   <Tab title="cURL">
     ```bash
-    curl -X POST https://text.api.pangram.com/v3 \
+    curl -X POST https://text.external-api.pangram.com/task \
       -H "Content-Type: application/json" \
       -H "x-api-key: <your-api-key>" \
       -d '{"text": "Your text here"}'
@@ -35,18 +35,24 @@ All API requests must include your API key in the `x-api-key` header:
     import requests
 
     response = requests.post(
-        "https://text.api.pangram.com/v3",
+        "https://text.external-api.pangram.com/task",
         headers={
             "Content-Type": "application/json",
-            "x-api-key": "<your-api-key>"
+            "x-api-key": "<your-api-key>",
         },
-        json={"text": "Your text here"}
+        json={"text": "Your text here"},
+    )
+    task_id = response.json()["task_id"]
+
+    result = requests.get(
+        f"https://text.external-api.pangram.com/task/{task_id}",
+        headers={"x-api-key": "<your-api-key>"},
     )
     ```
   </Tab>
   <Tab title="JavaScript">
     ```javascript
-    const response = await fetch("https://text.api.pangram.com/v3", {
+    const submitResponse = await fetch("https://text.external-api.pangram.com/task", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -54,16 +60,33 @@ All API requests must include your API key in the `x-api-key` header:
       },
       body: JSON.stringify({ text: "Your text here" })
     });
+
+    const { task_id } = await submitResponse.json();
+
+    const resultResponse = await fetch(`https://text.external-api.pangram.com/task/${task_id}`, {
+      headers: {
+        "x-api-key": "<your-api-key>"
+      }
+    });
     ```
   </Tab>
 </Tabs>
+
+## Async Task Flow
+
+Submit text with `POST /task`, then poll `GET /task/{task_id}` until the returned `stage` is `STAGE_SUCCESS` or `STAGE_FAILED`.
 
 ## Error Codes
 
 | Status Code | Description |
 |---|---|
 | `400 Bad Request` | The request body is not properly formatted. |
-| `401 Unauthorized` | The `x-api-key` is missing, invalid, or does not have enough credits to process the request. |
+| `401 Unauthorized` | The `x-api-key` is missing or invalid. |
+| `402 Payment Required` | The account has insufficient credits. |
+| `403 Forbidden` | The API key does not own the requested task. |
+| `404 Not Found` | The requested task does not exist. |
+| `422 Unprocessable Entity` | The input text is invalid. |
+| `429 Too Many Requests` | The API key exceeds its configured rate limit. |
 | `500 Internal Server Error` | There was an error processing the request. |
 
 If you are running into errors, please reach out at [support@pangram.com](mailto:support@pangram.com).
