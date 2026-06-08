@@ -16,7 +16,11 @@ Bulk jobs use the same base URL and API key authentication as the AI detection t
 https://text.external-api.pangram.com
 ```
 
-Terminal bulk statuses are `succeeded`, `failed`, and `partial`.
+Terminal bulk statuses are `succeeded`, `failed`, and `partial`. Bulk metadata and results are retained for 48 hours after the job reaches a terminal status.
+
+Timestamps are returned as Unix epoch seconds encoded as strings, such as `"1760000000.0"`. Treat them as UTC instants when converting to a date-time value.
+
+The launch bulk limit is 1,000 billable units per request. A billable unit is one started 1,000-word block per valid item, with a minimum of one unit per item. There is no separate item-count limit, but normal request-body limits still apply. Requests over the current bulk limit return `413 Payload Too Large`.
 
 ## POST /bulk
 
@@ -169,11 +173,11 @@ GET https://text.external-api.pangram.com/bulk/{bulk_id}
 </ResponseField>
 
 <ResponseField name="created_at" type="string">
-  Job creation timestamp.
+  Job creation timestamp as Unix epoch seconds encoded as a string.
 </ResponseField>
 
 <ResponseField name="completed_at" type="string">
-  Job completion timestamp. `null` while the job is not terminal.
+  Job completion timestamp as Unix epoch seconds encoded as a string. `null` while the job is not terminal.
 </ResponseField>
 
 **Example Response**
@@ -192,6 +196,16 @@ GET https://text.external-api.pangram.com/bulk/{bulk_id}
 ```
 
 ---
+
+## Status values
+
+| Status | Description |
+|---|---|
+| `queued` | The job was accepted, but no accepted item has started processing yet. |
+| `running` | At least one accepted item is in progress and the job is not terminal. |
+| `succeeded` | Every submitted item completed successfully. |
+| `failed` | Every submitted item failed, including immediate validation failures. |
+| `partial` | Every submitted item is terminal, with at least one success and at least one failure. |
 
 ## GET /bulk/{bulk_id}/items
 

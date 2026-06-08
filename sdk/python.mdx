@@ -289,11 +289,11 @@ status = client.get_bulk_status(bulk_id)
 </ResponseField>
 
 <ResponseField name="created_at" type="string">
-  Job creation timestamp.
+  Job creation timestamp as Unix epoch seconds encoded as a string.
 </ResponseField>
 
 <ResponseField name="completed_at" type="string">
-  Job completion timestamp. `None` while the job is not terminal.
+  Job completion timestamp as Unix epoch seconds encoded as a string. `None` while the job is not terminal.
 </ResponseField>
 
 ---
