@@ -169,6 +169,198 @@ result = client.predict(text, public_dashboard_link=True)
 
 ---
 
+### submit_bulk()
+
+Submit a Bulk API job for asynchronous AI detection across many inputs.
+
+Provide exactly one of `text` or `items`.
+
+```python
+bulk = client.submit_bulk(items=[
+    {"id": "row-001", "text": "First text to analyze"},
+    {"id": "row-002", "text": "Second text to analyze"},
+])
+
+bulk_id = bulk["bulk_id"]
+```
+
+**Parameters**
+
+<ParamField body="text" type="list[string]">
+  List of input texts. Use this shape when you do not need customer item IDs.
+</ParamField>
+
+<ParamField body="items" type="list[dict]">
+  List of item dictionaries. Each item must include `text` and may include a unique customer-defined `id`.
+</ParamField>
+
+**Returns**
+
+<ResponseField name="bulk_id" type="string">
+  The ID of the bulk job.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Initial status. Usually `queued`; returns `failed` if every item failed immediate validation.
+</ResponseField>
+
+<ResponseField name="total_items" type="integer">
+  Total number of submitted items.
+</ResponseField>
+
+<ResponseField name="accepted_items" type="list">
+  Items accepted for processing. Each item includes `index`, optional `id`, and `task_id`.
+</ResponseField>
+
+<ResponseField name="failed_items" type="list">
+  Items that failed immediate validation. Each item includes `index`, optional `id`, `task_id: None`, `stage`, and `error`.
+</ResponseField>
+
+---
+
+### wait_for_bulk()
+
+Poll a bulk job until it reaches a terminal status.
+
+```python
+status = client.wait_for_bulk(
+    bulk_id,
+    timeout=3600,
+    poll_interval=0.5,
+)
+```
+
+Terminal statuses are `succeeded`, `failed`, and `partial`.
+
+**Parameters**
+
+<ParamField body="bulk_id" type="string" required>
+  The bulk job ID returned by `submit_bulk()`.
+</ParamField>
+
+<ParamField body="timeout" type="float" default="3600">
+  Maximum number of seconds to wait for terminal completion.
+</ParamField>
+
+<ParamField body="poll_interval" type="float" default="0.5">
+  Number of seconds to wait between polling attempts. Values below `0.1` are clamped to `0.1`.
+</ParamField>
+
+**Returns**
+
+The same dictionary returned by `get_bulk_status()` after the job reaches a terminal status.
+
+Raises `TimeoutError` if the job does not complete before `timeout`.
+
+---
+
+### get_bulk_status()
+
+Fetch the current status and counters for a bulk job.
+
+```python
+status = client.get_bulk_status(bulk_id)
+```
+
+**Returns**
+
+<ResponseField name="bulk_id" type="string">
+  The ID of the bulk job.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  One of `queued`, `running`, `succeeded`, `failed`, or `partial`.
+</ResponseField>
+
+<ResponseField name="total_items" type="integer">
+  Total number of submitted items.
+</ResponseField>
+
+<ResponseField name="accepted" type="integer">
+  Number of items accepted for processing.
+</ResponseField>
+
+<ResponseField name="succeeded" type="integer">
+  Number of items that completed successfully.
+</ResponseField>
+
+<ResponseField name="failed" type="integer">
+  Number of items that failed.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Job creation timestamp.
+</ResponseField>
+
+<ResponseField name="completed_at" type="string">
+  Job completion timestamp. `None` while the job is not terminal.
+</ResponseField>
+
+---
+
+### get_bulk_items()
+
+Fetch paginated item metadata for a bulk job.
+
+```python
+items = client.get_bulk_items(bulk_id, offset=0, limit=100)
+```
+
+**Parameters**
+
+<ParamField body="bulk_id" type="string" required>
+  The bulk job ID returned by `submit_bulk()`.
+</ParamField>
+
+<ParamField body="offset" type="integer" default="0">
+  Zero-based item offset.
+</ParamField>
+
+<ParamField body="limit" type="integer" default="100">
+  Maximum number of items to return. The API allows up to `1000`.
+</ParamField>
+
+**Returns**
+
+A dictionary containing `bulk_id`, `offset`, `limit`, `total_items`, and `items`. Each item includes `index`, optional `id`, `task_id`, `stage`, and optional `error`.
+
+---
+
+### get_bulk_results()
+
+Fetch paginated results for a bulk job.
+
+```python
+results = client.get_bulk_results(bulk_id, offset=0, limit=100)
+
+for item in results["items"]:
+    if item["result"] is not None:
+        print(item["id"], item["result"]["prediction_short"])
+
+for failed in results["failed_items"]:
+    print(failed["id"], failed["error"])
+```
+
+**Parameters**
+
+<ParamField body="bulk_id" type="string" required>
+  The bulk job ID returned by `submit_bulk()`.
+</ParamField>
+
+<ParamField body="offset" type="integer" default="0">
+  Zero-based item offset.
+</ParamField>
+
+<ParamField body="limit" type="integer" default="100">
+  Maximum number of items to return. The API allows up to `1000`.
+</ParamField>
+
+**Returns**
+
+A dictionary containing `bulk_id`, `offset`, `limit`, `total_items`, `items`, and `failed_items`. Successful completed items include `result` with the same shape returned by `predict()`. In-progress items have `result` set to `None`.
+
+---
+
 ### check_plagiarism()
 
 Check text for potential plagiarism against a database of online content.
@@ -218,7 +410,7 @@ Raises `ValueError` if the API returns an error.
 ## Deprecated Methods
 
 <Warning>
-The following SDK compatibility methods are deprecated and may be removed on August 1, 2026. Use `predict()` instead.
+The following SDK compatibility methods are deprecated and may be removed on August 1, 2026. Use `predict()` for one-off calls or `submit_bulk()` for asynchronous bulk jobs.
 </Warning>
 
 ### predict_short() <Badge color="red">Deprecated</Badge>
@@ -231,7 +423,7 @@ result = client.predict_short(text)
 
 ### batch_predict() <Badge color="red">Deprecated</Badge>
 
-Calls `predict()` once per input text.
+Calls `predict()` once per input text. Use `submit_bulk()` for asynchronous bulk jobs.
 
 ```python
 results = client.batch_predict(["text one", "text two"])
@@ -239,4 +431,4 @@ results = client.batch_predict(["text one", "text two"])
 
 ## Removed Legacy Methods
 
-`predict_extended()` and `predict_sliding_window()` are no longer part of `pangram-sdk` 0.2.x. Use `predict()` for current AI detection and segment-level results.
+`predict_extended()` and `predict_sliding_window()` are no longer part of the current `pangram-sdk`. Use `predict()` for current AI detection and segment-level results.

@@ -1,0 +1,370 @@
+---
+title: "Bulk API"
+description: "Submit asynchronous AI detection jobs for many texts"
+api: POST https://text.external-api.pangram.com/bulk
+---
+
+<Badge color="green">Current</Badge>
+
+<Update label="Bulk API" description="Current version">
+  The Bulk API queues many AI detection inputs as one asynchronous job. Submit the job with `POST /bulk`, poll `GET /bulk/{bulk_id}`, then page through item metadata or results.
+</Update>
+
+Bulk jobs use the same base URL and API key authentication as the AI detection task API:
+
+```text
+https://text.external-api.pangram.com
+```
+
+Terminal bulk statuses are `succeeded`, `failed`, and `partial`.
+
+## POST /bulk
+
+Create a bulk AI detection job.
+
+```
+POST https://text.external-api.pangram.com/bulk
+```
+
+### Request
+
+Provide exactly one of `items` or `text`.
+
+<ParamField body="items" type="array">
+  List of item objects. Each item must include `text` and may include a unique customer-defined `id`.
+</ParamField>
+
+<ParamField body="text" type="array">
+  List of input text strings. Use this simpler shape when you do not need customer item IDs.
+</ParamField>
+
+<Expandable title="Item object properties">
+  <ParamField body="id" type="string">
+    Optional customer-defined item ID. IDs must be unique within the bulk request.
+  </ParamField>
+
+  <ParamField body="text" type="string" required>
+    The input text to analyze.
+  </ParamField>
+</Expandable>
+
+### Response
+
+Returns `202 Accepted`.
+
+<ResponseField name="bulk_id" type="string">
+  The ID of the bulk job.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Initial status. Usually `queued`; returns `failed` if every item failed immediate validation.
+</ResponseField>
+
+<ResponseField name="total_items" type="integer">
+  Total number of submitted items.
+</ResponseField>
+
+<ResponseField name="accepted_items" type="array">
+  Items accepted for processing. Each item includes `index`, optional `id`, and `task_id`.
+</ResponseField>
+
+<ResponseField name="failed_items" type="array">
+  Items that failed immediate validation. Each item includes `index`, optional `id`, `task_id: null`, `stage`, and `error`.
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://text.external-api.pangram.com/bulk \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your_api_key_here" \
+  -d '{
+    "items": [
+      {"id": "row-001", "text": "First text to analyze"},
+      {"id": "row-002", "text": "Second text to analyze"}
+    ]
+  }'
+```
+
+```python Python SDK
+from pangram import Pangram
+
+client = Pangram()
+
+bulk = client.submit_bulk(items=[
+    {"id": "row-001", "text": "First text to analyze"},
+    {"id": "row-002", "text": "Second text to analyze"},
+])
+
+bulk_id = bulk["bulk_id"]
+```
+
+</CodeGroup>
+
+**Example Response**
+
+```json
+{
+  "bulk_id": "blk_123",
+  "status": "queued",
+  "total_items": 2,
+  "accepted_items": [
+    {
+      "index": 0,
+      "id": "row-001",
+      "task_id": "123e4567-e89b-12d3-a456-426614174000"
+    },
+    {
+      "index": 1,
+      "id": "row-002",
+      "task_id": "223e4567-e89b-12d3-a456-426614174000"
+    }
+  ],
+  "failed_items": []
+}
+```
+
+---
+
+## GET /bulk/{bulk_id}
+
+Fetch the current status and counters for a bulk job.
+
+```
+GET https://text.external-api.pangram.com/bulk/{bulk_id}
+```
+
+### Request
+
+<ParamField path="bulk_id" type="string" required>
+  The bulk job ID returned by `POST /bulk`.
+</ParamField>
+
+### Response
+
+<ResponseField name="bulk_id" type="string">
+  The ID of the bulk job.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  One of `queued`, `running`, `succeeded`, `failed`, or `partial`.
+</ResponseField>
+
+<ResponseField name="total_items" type="integer">
+  Total number of submitted items.
+</ResponseField>
+
+<ResponseField name="accepted" type="integer">
+  Number of items accepted for processing.
+</ResponseField>
+
+<ResponseField name="succeeded" type="integer">
+  Number of items that completed successfully.
+</ResponseField>
+
+<ResponseField name="failed" type="integer">
+  Number of items that failed.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Job creation timestamp.
+</ResponseField>
+
+<ResponseField name="completed_at" type="string">
+  Job completion timestamp. `null` while the job is not terminal.
+</ResponseField>
+
+**Example Response**
+
+```json
+{
+  "bulk_id": "blk_123",
+  "status": "partial",
+  "total_items": 3,
+  "accepted": 2,
+  "succeeded": 2,
+  "failed": 1,
+  "created_at": "1760000000.0",
+  "completed_at": "1760000030.0"
+}
+```
+
+---
+
+## GET /bulk/{bulk_id}/items
+
+Fetch paginated item metadata for a bulk job.
+
+```
+GET https://text.external-api.pangram.com/bulk/{bulk_id}/items?offset=0&limit=100
+```
+
+### Request
+
+<ParamField path="bulk_id" type="string" required>
+  The bulk job ID returned by `POST /bulk`.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Zero-based item offset.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="100">
+  Maximum number of items to return. The maximum is `1000`.
+</ParamField>
+
+### Response
+
+<ResponseField name="bulk_id" type="string">
+  The ID of the bulk job.
+</ResponseField>
+
+<ResponseField name="offset" type="integer">
+  The returned page offset.
+</ResponseField>
+
+<ResponseField name="limit" type="integer">
+  The returned page limit.
+</ResponseField>
+
+<ResponseField name="total_items" type="integer">
+  Total number of submitted items.
+</ResponseField>
+
+<ResponseField name="items" type="array">
+  Item metadata. Each item includes `index`, optional `id`, `task_id`, `stage`, and optional `error`.
+</ResponseField>
+
+**Example Response**
+
+```json
+{
+  "bulk_id": "blk_123",
+  "offset": 0,
+  "limit": 100,
+  "total_items": 2,
+  "items": [
+    {
+      "index": 0,
+      "id": "row-001",
+      "task_id": "123e4567-e89b-12d3-a456-426614174000",
+      "stage": "STAGE_SUCCESS",
+      "error": null
+    },
+    {
+      "index": 1,
+      "id": "row-002",
+      "task_id": null,
+      "stage": "STAGE_FAILED",
+      "error": "Text must contain at least one valid token"
+    }
+  ]
+}
+```
+
+---
+
+## GET /bulk/{bulk_id}/results
+
+Fetch paginated results for a bulk job.
+
+```
+GET https://text.external-api.pangram.com/bulk/{bulk_id}/results?offset=0&limit=100
+```
+
+### Request
+
+<ParamField path="bulk_id" type="string" required>
+  The bulk job ID returned by `POST /bulk`.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Zero-based item offset.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="100">
+  Maximum number of items to return. The maximum is `1000`.
+</ParamField>
+
+### Response
+
+<ResponseField name="bulk_id" type="string">
+  The ID of the bulk job.
+</ResponseField>
+
+<ResponseField name="offset" type="integer">
+  The returned page offset.
+</ResponseField>
+
+<ResponseField name="limit" type="integer">
+  The returned page limit.
+</ResponseField>
+
+<ResponseField name="total_items" type="integer">
+  Total number of submitted items.
+</ResponseField>
+
+<ResponseField name="items" type="array">
+  Result items for successful or in-progress work. Successful completed items include `result`; in-progress items have `result: null`.
+</ResponseField>
+
+<ResponseField name="failed_items" type="array">
+  Failed item metadata for the requested page.
+</ResponseField>
+
+**Example Response**
+
+```json
+{
+  "bulk_id": "blk_123",
+  "offset": 0,
+  "limit": 100,
+  "total_items": 2,
+  "items": [
+    {
+      "index": 0,
+      "id": "row-001",
+      "task_id": "123e4567-e89b-12d3-a456-426614174000",
+      "stage": "STAGE_SUCCESS",
+      "error": null,
+      "result": {
+        "text": "First text to analyze",
+        "version": "3.3",
+        "prediction": "We believe this is human-written",
+        "prediction_short": "Human",
+        "fraction_ai": 0.0,
+        "fraction_ai_assisted": 0.0,
+        "fraction_human": 1.0,
+        "headline": "Human Written",
+        "num_ai_segments": 0,
+        "num_ai_assisted_segments": 0,
+        "num_human_segments": 1,
+        "windows": []
+      }
+    }
+  ],
+  "failed_items": [
+    {
+      "index": 1,
+      "id": "row-002",
+      "task_id": null,
+      "stage": "STAGE_FAILED",
+      "error": "Text must contain at least one valid token"
+    }
+  ]
+}
+```
+
+## Errors
+
+| Status Code | Description |
+|---|---|
+| `401 Unauthorized` | The `x-api-key` is missing or invalid. |
+| `402 Payment Required` | The account has insufficient credits. |
+| `403 Forbidden` | The API key does not own the requested bulk job. |
+| `404 Not Found` | The requested bulk job does not exist. |
+| `413 Payload Too Large` | The bulk request exceeds the maximum billable units. |
+| `422 Unprocessable Entity` | The request is empty, contains both `items` and `text`, includes duplicate item IDs, or otherwise fails validation. |
+| `500 Internal Server Error` | There was an error processing the request. |

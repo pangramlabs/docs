@@ -5,7 +5,7 @@ description: "Base URL, authentication, and error handling for the Pangram REST 
 
 ## Base URLs
 
-AI detection uses the following base URL:
+AI detection and bulk AI detection use the following base URL:
 
 ```
 https://text.external-api.pangram.com
@@ -76,6 +76,10 @@ All API requests must include your API key in the `x-api-key` header.
 
 Submit text with `POST /task`, then poll `GET /task/{task_id}` until the returned `stage` is `STAGE_SUCCESS` or `STAGE_FAILED`.
 
+## Bulk Flow
+
+Submit many texts with `POST /bulk`, poll `GET /bulk/{bulk_id}` until the returned `status` is `succeeded`, `failed`, or `partial`, then page through `GET /bulk/{bulk_id}/results`.
+
 ## Error Codes
 
 | Status Code | Description |
@@ -83,8 +87,9 @@ Submit text with `POST /task`, then poll `GET /task/{task_id}` until the returne
 | `400 Bad Request` | The request body is not properly formatted. |
 | `401 Unauthorized` | The `x-api-key` is missing or invalid. |
 | `402 Payment Required` | The account has insufficient credits. |
-| `403 Forbidden` | The API key does not own the requested task. |
-| `404 Not Found` | The requested task does not exist. |
+| `403 Forbidden` | The API key does not own the requested task or bulk job. |
+| `404 Not Found` | The requested task or bulk job does not exist. |
+| `413 Payload Too Large` | The bulk request exceeds the maximum billable units. |
 | `422 Unprocessable Entity` | The input text is invalid. |
 | `429 Too Many Requests` | The API key exceeds its configured rate limit. |
 | `500 Internal Server Error` | There was an error processing the request. |
