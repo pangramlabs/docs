@@ -81,7 +81,7 @@ description: "Get started with the Pangram Python SDK in minutes"
 
     bulk_id = bulk["bulk_id"]
     status = pangram_client.wait_for_bulk(bulk_id, poll_interval=2)
-    results = pangram_client.get_bulk_results(bulk_id, limit=100)
+    results = pangram_client.get_bulk_results(bulk_id)
 
     for item in results["items"]:
         if item["result"] is not None:

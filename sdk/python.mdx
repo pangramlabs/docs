@@ -328,10 +328,10 @@ A dictionary containing `bulk_id`, `offset`, `limit`, `total_items`, and `items`
 
 ### get_bulk_results()
 
-Fetch paginated results for a bulk job.
+Fetch all available results for a bulk job.
 
 ```python
-results = client.get_bulk_results(bulk_id, offset=0, limit=100)
+results = client.get_bulk_results(bulk_id)
 
 for item in results["items"]:
     if item["result"] is not None:
@@ -347,17 +347,43 @@ for failed in results["failed_items"]:
   The bulk job ID returned by `submit_bulk()`.
 </ParamField>
 
-<ParamField body="offset" type="integer" default="0">
-  Zero-based item offset.
-</ParamField>
-
-<ParamField body="limit" type="integer" default="100">
-  Maximum number of items to return. The API allows up to `1000`.
+<ParamField body="page_size" type="integer" default="1000">
+  Number of submitted item slots to request per API call. The API allows up to `1000`.
 </ParamField>
 
 **Returns**
 
-A dictionary containing `bulk_id`, `offset`, `limit`, `total_items`, `items`, and `failed_items`. Successful completed items include `result` with the same shape returned by `predict()`. In-progress items have `result` set to `None`.
+A dictionary containing `bulk_id`, `total_items`, `items`, and `failed_items` aggregated across every results page. Successful completed items include `result` with the same shape returned by `predict()`. In-progress items have `result` set to `None`.
+
+---
+
+### get_bulk_results_page()
+
+Fetch one paginated results page for a bulk job.
+
+```python
+page = client.get_bulk_results_page(bulk_id, offset=0, limit=100)
+```
+
+Use this when you need incremental page-level inspection before fetching or storing the full result set.
+
+**Parameters**
+
+<ParamField body="bulk_id" type="string" required>
+  The bulk job ID returned by `submit_bulk()`.
+</ParamField>
+
+<ParamField body="offset" type="integer" default="0">
+  Zero-based submitted-item offset.
+</ParamField>
+
+<ParamField body="limit" type="integer" default="100">
+  Maximum number of submitted item slots to return. The API allows up to `1000`.
+</ParamField>
+
+**Returns**
+
+A dictionary containing `bulk_id`, `offset`, `limit`, `total_items`, `items`, and `failed_items` for the requested page.
 
 ---
 
