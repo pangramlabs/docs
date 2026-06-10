@@ -68,6 +68,8 @@ description: "Get started with the Pangram Python SDK in minutes"
   <Step title="Analyze many texts with the Bulk API">
     Use the Bulk API for asynchronous AI detection across many inputs.
     Submit the job, wait for a terminal status, then fetch results.
+    Completion time depends on the number and length of submitted items and current system load.
+    Use `get_bulk_status()` or `wait_for_bulk()` to monitor progress.
 
     ```python
     from pangram import Pangram

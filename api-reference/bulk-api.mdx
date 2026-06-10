@@ -10,6 +10,8 @@ api: POST https://text.external-api.pangram.com/bulk
   The Bulk API queues many AI detection inputs as one asynchronous job. Submit the job with `POST /bulk`, poll `GET /bulk/{bulk_id}`, then page through item metadata or results.
 </Update>
 
+Completion time depends on the number and length of submitted items and current system load. Use `GET /bulk/{bulk_id}` to monitor progress.
+
 Bulk jobs use the same base URL and API key authentication as the AI detection task API:
 
 ```text

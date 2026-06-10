@@ -176,6 +176,7 @@ The `timeout` and `poll_interval` parameters have the same behavior as `predict(
 Submit a Bulk API job for asynchronous AI detection across many inputs.
 
 Provide exactly one of `text` or `items`.
+Bulk jobs are processed asynchronously. Completion time depends on the number and length of submitted items and current system load. Use `get_bulk_status()` or `wait_for_bulk()` to monitor progress.
 
 ```python
 bulk = client.submit_bulk(items=[
@@ -233,6 +234,7 @@ status = client.wait_for_bulk(
 ```
 
 Terminal statuses are `succeeded`, `failed`, and `partial`.
+Completion time depends on the number and length of submitted items and current system load.
 
 **Parameters**
 
