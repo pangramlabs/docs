@@ -178,6 +178,16 @@ Submit a Bulk API job for asynchronous AI detection across many inputs.
 Provide exactly one of `text` or `items`.
 Bulk jobs are processed asynchronously. Completion time depends on the number and length of submitted items and current system load. Use `get_bulk_status()` or `wait_for_bulk()` to monitor progress.
 
+| SDK call | Valid? | Notes |
+| --- | --- | --- |
+| `client.submit_bulk(text=["First text", "Second text"])` | Yes | Use when you do not need customer item IDs. |
+| `client.submit_bulk(items=[{"id": "row-001", "text": "First text"}])` | Yes | Use when you want customer item IDs returned with status and results. |
+| `client.submit_bulk(items=[{"text": "First text"}])` | Yes | Item `id` is optional. |
+| `client.submit_bulk(text=["First text"], items=[{"text": "Second text"}])` | No | Send exactly one payload shape, not both. |
+| `client.submit_bulk()` | No | The request must include either `text` or `items`. |
+| `client.submit_bulk(items=[{"id": "row-001", "text": "First text"}, {"id": "row-001", "text": "Second text"}])` | No | Item IDs must be unique within the request. |
+| `client.submit_bulk(items=[{"id": "row-001"}])` | No | Each item must include `text`. |
+
 ```python
 bulk = client.submit_bulk(items=[
     {"id": "row-001", "text": "First text to analyze"},
