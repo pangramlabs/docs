@@ -36,15 +36,19 @@ POST https://text.external-api.pangram.com/bulk
 
 Provide exactly one of `items` or `text`.
 
-| Request body | Valid? | Notes |
-| --- | --- | --- |
-| `{"text": ["First text", "Second text"]}` | Yes | Use this simple shape when you do not need customer item IDs. |
-| `{"items": [{"id": "row-001", "text": "First text"}]}` | Yes | Use this shape when you want customer item IDs returned with status and results. |
-| `{"items": [{"text": "First text"}]}` | Yes | Item `id` is optional. |
-| `{"text": ["First text"], "items": [{"text": "Second text"}]}` | No | Send exactly one payload shape, not both. |
-| `{}` | No | The request must include either `text` or `items`. |
-| `{"items": [{"id": "row-001", "text": "First text"}, {"id": "row-001", "text": "Second text"}]}` | No | Item IDs must be unique within the request. |
-| `{"items": [{"id": "row-001"}]}` | No | Each item must include `text`. |
+Valid request bodies use either a plain `text` list:
+
+```json
+{"text": ["First text", "Second text"]}
+```
+
+Or an `items` list when you want customer IDs returned with status and results:
+
+```json
+{"items": [{"id": "row-001", "text": "First text"}]}
+```
+
+Do not include both `text` and `items` in the same request. Item `id` values are optional, but must be unique when provided.
 
 <ParamField body="items" type="array">
   List of item objects. Each item must include `text` and may include a unique customer-defined `id`.
