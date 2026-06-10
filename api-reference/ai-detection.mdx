@@ -10,6 +10,8 @@ api: POST https://text.external-api.pangram.com/task
   The current AI detection API creates an async task and returns a task ID. Poll the task endpoint until it reaches `STAGE_SUCCESS` or `STAGE_FAILED`.
 </Update>
 
+Use the [Bulk API](/api-reference/bulk-api) when you need to analyze many texts as one asynchronous job.
+
 ## POST /task
 
 Create an async AI detection task.

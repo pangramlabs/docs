@@ -4,7 +4,7 @@ description: "Legacy AI detection endpoints replaced by the async inference API"
 ---
 
 <Warning>
-All endpoints on this page are legacy AI detection endpoints. Use the current [async AI detection API](/api-reference/ai-detection) instead.
+All endpoints on this page are legacy AI detection endpoints. Use the current [async AI detection API](/api-reference/ai-detection) for single inputs or the [Bulk API](/api-reference/bulk-api) for many inputs.
 </Warning>
 
 ## Synchronous V3 Endpoint <Badge color="red">Deprecated</Badge> <Badge color="yellow">Legacy</Badge>
@@ -91,7 +91,7 @@ Single text classification returning an AI likelihood score.
 POST https://text-batch.api.pangram.com
 ```
 
-Classify multiple texts in a single request.
+Classify multiple texts in a single request. Use the current [Bulk API](/api-reference/bulk-api) instead.
 
 **Request Body**
 

@@ -42,6 +42,7 @@
             "pages": [
               "api-reference/introduction",
               "api-reference/ai-detection",
+              "api-reference/bulk-api",
               "api-reference/plagiarism-detection"
             ]
           },
