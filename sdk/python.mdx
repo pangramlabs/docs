@@ -158,14 +158,16 @@ Raises `ValueError` if the API returns an error, the task fails, or the response
 Classify text and include a public dashboard link in the completed response.
 
 ```python
-result = client.predict_with_dashboard_link(text)
+result = client.predict_with_dashboard_link(text, timeout=300, poll_interval=0.5)
 ```
 
 This is equivalent to:
 
 ```python
-result = client.predict(text, public_dashboard_link=True)
+result = client.predict(text, public_dashboard_link=True, timeout=300, poll_interval=0.5)
 ```
+
+The `timeout` and `poll_interval` parameters have the same behavior as `predict()`.
 
 ---
 
@@ -355,6 +357,8 @@ for failed in results["failed_items"]:
 
 A dictionary containing `bulk_id`, `total_items`, `items`, and `failed_items` aggregated across every results page. Successful completed items include `result` with the same shape returned by `predict()`. In-progress items have `result` set to `None`.
 
+`get_bulk_results()` materializes all pages into memory. For large jobs, use `get_bulk_results_page()` in a loop and process each page as it arrives.
+
 ---
 
 ### get_bulk_results_page()
@@ -366,6 +370,22 @@ page = client.get_bulk_results_page(bulk_id, offset=0, limit=100)
 ```
 
 Use this when you need incremental page-level inspection before fetching or storing the full result set.
+
+```python
+offset = 0
+limit = 1000
+
+while True:
+    page = client.get_bulk_results_page(bulk_id, offset=offset, limit=limit)
+    for item in page["items"]:
+        process(item)
+    for failed in page["failed_items"]:
+        handle_failure(failed)
+
+    offset += limit
+    if offset >= page["total_items"]:
+        break
+```
 
 **Parameters**
 

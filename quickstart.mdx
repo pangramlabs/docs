@@ -90,6 +90,24 @@ description: "Get started with the Pangram Python SDK in minutes"
     for failed in results["failed_items"]:
         print(failed["id"], failed["error"])
     ```
+
+    For large jobs, process one results page at a time:
+
+    ```python
+    offset = 0
+    limit = 1000
+
+    while True:
+        page = pangram_client.get_bulk_results_page(bulk_id, offset=offset, limit=limit)
+        for item in page["items"]:
+            process(item)
+        for failed in page["failed_items"]:
+            handle_failure(failed)
+
+        offset += limit
+        if offset >= page["total_items"]:
+            break
+    ```
   </Step>
 
   <Step title="Check for plagiarism">
