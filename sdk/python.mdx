@@ -169,6 +169,84 @@ result = client.predict(text, public_dashboard_link=True)
 
 ---
 
+### predict_file()
+
+Upload a single `.docx`, `.pdf`, or `.rtf` document for AI detection. Pangram extracts the document text and returns the same prediction fields as `predict()`, plus the uploaded `filename`.
+
+```python
+result = client.predict_file(
+    "path/to/document.docx",
+    public_dashboard_link=False,
+    timeout=300,
+)
+```
+
+**Parameters**
+
+<ParamField body="file_path" type="string" required>
+  Path to the file to upload and analyze.
+</ParamField>
+
+<ParamField body="public_dashboard_link" type="boolean" default="false">
+  Whether to include a public dashboard link in the completed response.
+</ParamField>
+
+<ParamField body="timeout" type="float" default="300">
+  Maximum number of seconds to wait for the upload request to complete.
+</ParamField>
+
+**Returns**
+
+A dictionary with the extracted text, prediction fields, window-level analysis, and uploaded filename.
+
+<ResponseField name="filename" type="string">
+  Uploaded file name.
+</ResponseField>
+
+<ResponseField name="text" type="string">
+  Text extracted from the uploaded file.
+</ResponseField>
+
+<ResponseField name="dashboard_link" type="string">
+  Dashboard link. Only present when `public_dashboard_link` is `True`.
+</ResponseField>
+
+All other prediction fields match `predict()`, including `headline`, `prediction`, `prediction_short`, `fraction_ai`, `fraction_ai_assisted`, `fraction_human`, and `windows`.
+
+---
+
+### predict_files()
+
+Upload multiple `.docx`, `.pdf`, or `.rtf` documents in one request.
+
+```python
+results = client.predict_files(
+    ["path/to/first.docx", "path/to/second.pdf"],
+    public_dashboard_link=False,
+    timeout=300,
+)
+```
+
+**Parameters**
+
+<ParamField body="file_paths" type="list" required>
+  Paths to files to upload and analyze.
+</ParamField>
+
+<ParamField body="public_dashboard_link" type="boolean" default="false">
+  Whether to include a public dashboard link in each completed response.
+</ParamField>
+
+<ParamField body="timeout" type="float" default="300">
+  Maximum number of seconds to wait for the upload request to complete.
+</ParamField>
+
+**Returns**
+
+A list of per-file result dictionaries. Each result has the same shape returned by `predict_file()`.
+
+---
+
 ### check_plagiarism()
 
 Check text for potential plagiarism against a database of online content.
