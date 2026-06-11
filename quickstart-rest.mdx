@@ -142,6 +142,18 @@ description: "Get started with the Pangram REST API using cURL"
     ```
   </Step>
 
+  <Step title="Upload a file">
+    Send documents as multipart form data to create file-based AI detection results.
+
+    ```bash
+    curl -s -X POST https://file-external.api.pangram.com \
+      -H "x-api-key: $PANGRAM_API_KEY" \
+      -F "files=@modeling/deployments/test/test_document.docx" \
+      -F "public_dashboard_link=true" \
+      | jq -r '.[0].public_dashboard_link'
+    ```
+  </Step>
+
   <Step title="Check for plagiarism">
     Check text against a database of online content. Note the different base URL.
 

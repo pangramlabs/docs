@@ -1,0 +1,91 @@
+---
+title: "File Upload"
+description: "Upload files for AI detection and receive dashboard links"
+openapi: openapi/file-upload.json POST /
+---
+
+<Badge color="green">Current</Badge>
+
+<Update label="File Upload" description="Current version">
+  File uploads accept documents as multipart form data and return per-file results. Use them when you want Pangram to extract text from files and create dashboard-backed AI detection results.
+</Update>
+
+## POST /
+
+Upload one or more files for AI detection.
+
+```
+POST https://file-external.api.pangram.com
+```
+
+This endpoint must receive `multipart/form-data` with a form field named `files`. Requests without that field return `422 Unprocessable Entity` with `Field required` for `body.files`.
+
+### Request
+
+Send the request as `multipart/form-data`.
+
+When using cURL, do not set the `Content-Type` header yourself. The `-F` flags add the multipart boundary automatically.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `files` | file[] | Yes | Files to analyze. Include the `files` form field once per uploaded file. |
+| `public_dashboard_link` | boolean | No | Whether to create and return a public dashboard link for each uploaded file. Defaults to `false`. |
+
+### Response
+
+Returns a JSON array with one result object per uploaded file.
+
+| Field | Type | Description |
+|---|---|---|
+| `public_dashboard_link` | string | Public dashboard URL for the uploaded file. Present when `public_dashboard_link` is `true`. |
+
+### Example
+
+```bash cURL
+curl -s -X POST https://file-external.api.pangram.com \
+  -H "x-api-key: $PANGRAM_API_KEY" \
+  -F "files=@modeling/deployments/test/test_document.docx" \
+  -F "public_dashboard_link=true"
+```
+
+To upload multiple files, repeat the `files` form field:
+
+```bash cURL
+curl -s -X POST https://file-external.api.pangram.com \
+  -H "x-api-key: $PANGRAM_API_KEY" \
+  -F "files=@path/to/first.docx" \
+  -F "files=@path/to/second.pdf" \
+  -F "public_dashboard_link=true"
+```
+
+**Example Response**
+
+```json
+[
+  {
+    "public_dashboard_link": "https://www.pangram.com/history/123e4567-e89b-12d3-a456-426614174000"
+  }
+]
+```
+
+To print only the dashboard link:
+
+```bash
+curl -s -X POST https://file-external.api.pangram.com \
+  -H "x-api-key: $PANGRAM_API_KEY" \
+  -F "files=@modeling/deployments/test/test_document.docx" \
+  -F "public_dashboard_link=true" \
+  | jq -r '.[0].public_dashboard_link'
+```
+
+## Errors
+
+| Status Code | Description |
+|---|---|
+| `400 Bad Request` | The multipart request is missing a file or includes invalid form data. |
+| `401 Unauthorized` | The `x-api-key` is missing or invalid. |
+| `402 Payment Required` | The account has insufficient credits. |
+| `413 Payload Too Large` | The upload exceeds the maximum supported file size. |
+| `415 Unsupported Media Type` | The uploaded file type is not supported. |
+| `422 Unprocessable Entity` | The `files` field is missing, the form data is invalid, or Pangram could not extract valid text from the uploaded file. |
+| `500 Internal Server Error` | There was an error processing the upload. |

@@ -11,6 +11,12 @@ AI detection and bulk AI detection use the following base URL:
 https://text.external-api.pangram.com
 ```
 
+File uploads use the following base URL:
+
+```
+https://file-external.api.pangram.com
+```
+
 The plagiarism detection endpoint uses a separate base URL:
 
 ```
@@ -83,6 +89,10 @@ Submit many texts with `POST /bulk`, poll `GET /bulk/{bulk_id}` until the return
 Bulk completion time depends on the number and length of submitted items and current system load. Use `GET /bulk/{bulk_id}` to monitor progress.
 
 Bulk metadata and results are retained for 48 hours after terminal completion. Bulk `created_at` and `completed_at` values are Unix epoch seconds encoded as strings.
+
+## File Upload Flow
+
+Submit documents as `multipart/form-data` to `https://file-external.api.pangram.com`. Include one or more `files` fields and set `public_dashboard_link=true` when you need a shareable result link.
 
 ## Error Codes
 
