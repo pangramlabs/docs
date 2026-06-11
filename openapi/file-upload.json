@@ -84,9 +84,12 @@
                 "required": ["files"],
                 "properties": {
                   "files": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "File to analyze. Send this form field once per uploaded file when uploading multiple files."
+                    "type": "array",
+                    "description": "Files to analyze. Send this form field once per uploaded file.",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
                   },
                   "public_dashboard_link": {
                     "type": "boolean",
@@ -97,6 +100,8 @@
               },
               "encoding": {
                 "files": {
+                  "style": "form",
+                  "explode": true,
                   "contentType": "application/octet-stream"
                 }
               }

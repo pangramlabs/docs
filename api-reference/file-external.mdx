@@ -28,7 +28,7 @@ When using cURL, do not set the `Content-Type` header yourself. The `-F` flags a
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `files` | file | Yes | File to analyze. To upload multiple files, include the `files` form field once per file. |
+| `files` | file[] | Yes | Files to analyze. Include the `files` form field once per uploaded file. |
 | `public_dashboard_link` | boolean | No | Whether to create and return a public dashboard link for each uploaded file. Defaults to `false`. |
 
 ### Response
@@ -45,6 +45,16 @@ Returns a JSON array with one result object per uploaded file.
 curl -s -X POST https://file-external.api.pangram.com \
   -H "x-api-key: $PANGRAM_API_KEY" \
   -F "files=@modeling/deployments/test/test_document.docx" \
+  -F "public_dashboard_link=true"
+```
+
+To upload multiple files, repeat the `files` form field:
+
+```bash cURL
+curl -s -X POST https://file-external.api.pangram.com \
+  -H "x-api-key: $PANGRAM_API_KEY" \
+  -F "files=@path/to/first.docx" \
+  -F "files=@path/to/second.pdf" \
   -F "public_dashboard_link=true"
 ```
 
