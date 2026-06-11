@@ -43,6 +43,7 @@
               "api-reference/introduction",
               "api-reference/ai-detection",
               "api-reference/bulk-api",
+              "api-reference/file-external",
               "api-reference/plagiarism-detection"
             ]
           },
