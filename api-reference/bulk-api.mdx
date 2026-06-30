@@ -24,6 +24,10 @@ Timestamps are returned as Unix epoch seconds encoded as strings, such as `"1760
 
 The launch bulk limit is 1,000 billable units per request. A billable unit is one started 1,000-word block per valid item, with a minimum of one unit per item. There is no separate item-count limit, but normal request-body limits still apply. Requests over the current bulk limit return `413 Payload Too Large`.
 
+<Note>
+  Bulk API usage is billed at a **20% discount** compared to the standard per-block rate for single-text detection. The discount applies automatically to every billable unit processed through the bulk endpoint.
+</Note>
+
 ## POST /bulk
 
 Create a bulk AI detection job.
