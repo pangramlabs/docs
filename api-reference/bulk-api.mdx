@@ -4,6 +4,8 @@ description: "Submit asynchronous AI detection jobs for many texts"
 api: POST https://text.external-api.pangram.com/bulk
 ---
 
+For more information on billing units and pricing, check our [pricing page for developers](https://www.pangram.com/pricing?category=developers).
+
 <Badge color="green">Current</Badge>
 
 <Update label="Bulk API" description="Current version">
@@ -22,7 +24,7 @@ Terminal bulk statuses are `succeeded`, `failed`, and `partial`. Bulk metadata a
 
 Timestamps are returned as Unix epoch seconds encoded as strings, such as `"1760000000.0"`. Treat them as UTC instants when converting to a date-time value.
 
-The launch bulk limit is 1,000 billable units per request. A billable unit is one started 1,000-word block per valid item, with a minimum of one unit per item. There is no separate item-count limit, but normal request-body limits still apply. Requests over the current bulk limit return `413 Payload Too Large`.
+The launch bulk limit is 1,000 billable units per request. A billable unit is one started word block per valid item — 100 words for Pangram 4, or 1,000 words for Pangram 3 — with a minimum of one unit per item. There is no separate item-count limit, but normal request-body limits still apply. Requests over the current bulk limit return `413 Payload Too Large`.
 
 ## POST /bulk
 
