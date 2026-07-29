@@ -14,6 +14,8 @@ For more information on billing units and pricing, check our [pricing page for d
 
 Use the [Bulk API](/api-reference/bulk-api) when you need to analyze many texts as one asynchronous job.
 
+Use [`GET /models`](/api-reference/models) to discover the selectors available to your API key. The REST API temporarily accepts an omitted `model` for backward compatibility and resolves it to `"default"`. New integrations should always send a selector explicitly.
+
 ## POST /task
 
 Create an async AI detection task.
@@ -26,6 +28,10 @@ POST https://text.external-api.pangram.com/task
 
 <ParamField body="text" type="string" required>
   The input text to analyze.
+</ParamField>
+
+<ParamField body="model" type="string" default="default">
+  A model selector returned by [`GET /models`](/api-reference/models).
 </ParamField>
 
 <ParamField body="public_dashboard_link" type="boolean" default="false">
@@ -47,7 +53,8 @@ curl -X POST https://text.external-api.pangram.com/task \
   -H "Content-Type: application/json" \
   -H "x-api-key: your_api_key_here" \
   -d '{
-    "text": "The text to analyze with Pangram",
+    "text": "AI-assisted passage. Human passage.",
+    "model": "pangram-4",
     "public_dashboard_link": false
   }'
 ```
@@ -56,7 +63,10 @@ curl -X POST https://text.external-api.pangram.com/task \
 from pangram import Pangram
 
 pangram_client = Pangram()
-result = pangram_client.predict("The text to analyze with Pangram")
+result = pangram_client.predict(
+    "AI-assisted passage. Human passage.",
+    model="pangram-4",
+)
 ```
 
 </CodeGroup>
@@ -68,6 +78,14 @@ result = pangram_client.predict("The text to analyze with Pangram")
   "task_id": "123e4567-e89b-12d3-a456-426614174000"
 }
 ```
+
+### Model selection errors
+
+| Status Code | Description |
+|---|---|
+| `403 Forbidden` | The requested model is not enabled for the API key. |
+| `422 Unprocessable Entity` | The model selector is malformed or unknown. |
+| `503 Service Unavailable` | The requested model is temporarily unavailable. |
 
 ---
 
@@ -96,11 +114,11 @@ GET https://text.external-api.pangram.com/task/{task_id}
 </ResponseField>
 
 <ResponseField name="text" type="string">
-  The input text that was analyzed. Present on success.
+  The analyzed text returned by the model. Pangram 4 may normalize the submitted text before inference; window offsets refer to this returned value. Present on success.
 </ResponseField>
 
 <ResponseField name="version" type="string">
-  The API version identifier (e.g., `"3.0"`). Present on success.
+  The API version identifier (e.g., `"4.0"` for Pangram 4). Present on success.
 </ResponseField>
 
 <ResponseField name="headline" type="string">
@@ -112,7 +130,7 @@ GET https://text.external-api.pangram.com/task/{task_id}
 </ResponseField>
 
 <ResponseField name="prediction_short" type="string">
-  Short-form prediction string (e.g., `"AI"`, `"AI-Assisted"`, `"Human"`, `"Mixed"`). Present on success.
+  Short-form prediction string. Pangram 4 returns `"AI"`, `"Human"`, or `"Mixed"`. Present on success.
 </ResponseField>
 
 <ResponseField name="fraction_ai" type="float">
@@ -151,7 +169,7 @@ GET https://text.external-api.pangram.com/task/{task_id}
       The window text.
     </ResponseField>
     <ResponseField name="label" type="string">
-      Descriptive classification label (e.g., `"AI-Generated"`, `"Moderately AI-Assisted"`).
+      Descriptive classification label. Pangram 4 returns `"AI-Generated"`, `"AI-Assisted"`, or `"Human Written"`.
     </ResponseField>
     <ResponseField name="ai_assistance_score" type="float">
       <Tooltip tip="A continuous score from 0 to 1, where 0 means entirely human-written and 1 means fully AI-generated. Values in between indicate varying degrees of AI assistance.">AI assistance score</Tooltip> detailing the level of AI assistance (0.0–1.0).
@@ -160,16 +178,25 @@ GET https://text.external-api.pangram.com/task/{task_id}
       <Tooltip tip="High = strong signal, the model is very sure. Medium = moderate signal. Low = weak signal, treat with caution.">Confidence level</Tooltip> for the classification (`"High"`, `"Medium"`, `"Low"`).
     </ResponseField>
     <ResponseField name="start_index" type="integer">
-      Starting character index in the original text.
+      Starting character index in the returned top-level `text`.
     </ResponseField>
     <ResponseField name="end_index" type="integer">
-      Ending character index in the original text.
+      End-exclusive character index in the returned top-level `text`.
     </ResponseField>
     <ResponseField name="word_count" type="integer">
       Number of words in the window.
     </ResponseField>
     <ResponseField name="token_length" type="integer">
       Token length of the window.
+    </ResponseField>
+    <ResponseField name="is_humanized" type="boolean">
+      Whether Pangram 4's humanizer head classified the window as humanized. Present on every Pangram 4 window.
+    </ResponseField>
+    <ResponseField name="humanizer_score" type="float">
+      Pangram 4 humanizer-head score from 0.0–1.0. Present on every Pangram 4 window.
+    </ResponseField>
+    <ResponseField name="edit_bucket_probabilities" type="array[float]">
+      Optional, separately enabled vector of 15 edit-bucket probabilities.
     </ResponseField>
   </Expandable>
 </ResponseField>
@@ -192,41 +219,46 @@ curl -X GET https://text.external-api.pangram.com/task/123e4567-e89b-12d3-a456-4
 
 **Success Response**
 
+This example shows a Pangram 4 result. Pangram 4 returns `version: "4.0"`, uses `"AI-Assisted"` instead of lightly or moderately assisted window labels, and keeps `confidence` as `"Low"`, `"Medium"`, or `"High"`.
+
 ```json
 {
   "stage": "STAGE_SUCCESS",
-  "text": "The text to analyze with Pangram",
-  "version": "3.0",
-  "headline": "AI Detected",
-  "prediction": "We are confident that this document contains AI-generated or AI-assisted content.",
+  "text": "AI-assisted passage. Human passage.",
+  "version": "4.0",
+  "headline": "AI Assisted",
+  "prediction": "We believe that this text is a mix of AI-assisted and human-written content.",
   "prediction_short": "Mixed",
-  "fraction_ai": 0.70,
-  "fraction_ai_assisted": 0.20,
-  "fraction_human": 0.10,
-  "num_ai_segments": 7,
-  "num_ai_assisted_segments": 2,
+  "fraction_ai": 0.0,
+  "fraction_ai_assisted": 0.6,
+  "fraction_human": 0.4,
+  "num_ai_segments": 0,
+  "num_ai_assisted_segments": 1,
   "num_human_segments": 1,
-  "dashboard_link": "https://www.pangram.com/history/123e4567-e89b-12d3-a456-426614174000",
   "windows": [
     {
-      "text": "The text to analyze",
-      "label": "AI-Generated",
-      "ai_assistance_score": 0.85,
+      "text": "AI-assisted passage. ",
+      "label": "AI-Assisted",
+      "ai_assistance_score": 0.55,
       "confidence": "High",
       "start_index": 0,
-      "end_index": 19,
-      "word_count": 4,
-      "token_length": 5
+      "end_index": 21,
+      "word_count": 2,
+      "token_length": 5,
+      "is_humanized": true,
+      "humanizer_score": 0.91
     },
     {
-      "text": "with Pangram",
-      "label": "Moderately AI-Assisted",
-      "ai_assistance_score": 0.45,
+      "text": "Human passage.",
+      "label": "Human Written",
+      "ai_assistance_score": 0.02,
       "confidence": "Medium",
-      "start_index": 20,
-      "end_index": 32,
+      "start_index": 21,
+      "end_index": 35,
       "word_count": 2,
-      "token_length": 3
+      "token_length": 4,
+      "is_humanized": false,
+      "humanizer_score": 0.0
     }
   ]
 }

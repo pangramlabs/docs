@@ -28,6 +28,17 @@ description: "Get started with the Pangram Python SDK in minutes"
     ```
   </Step>
 
+  <Step title="Discover available models">
+    Model availability is specific to your API key. Retrieve the current catalog instead of hard-coding it.
+
+    ```python
+    available_models = pangram_client.list_models()
+    print(available_models)  # e.g., ["default", "pangram-4"]
+    ```
+
+    Use one returned value as the keyword-only `model` argument on text and bulk requests.
+  </Step>
+
   <Step title="Detect AI-generated text">
     ### Main prediction
 
@@ -38,8 +49,9 @@ description: "Get started with the Pangram Python SDK in minutes"
     from pangram import Pangram
 
     pangram_client = Pangram()
-    result = pangram_client.predict(text)
+    result = pangram_client.predict(text, model="pangram-4")
     stage = result['stage']  # "STAGE_SUCCESS" after predict() completes.
+    version = result['version']  # "4.0" for Pangram 4.
 
     # Analysis with AI-assistance detection.
     fraction_ai = result['fraction_ai']
@@ -52,6 +64,8 @@ description: "Get started with the Pangram Python SDK in minutes"
         label = window['label']
         ai_assistance_score = window['ai_assistance_score']
         confidence = window['confidence']
+        is_humanized = window['is_humanized']
+        humanizer_score = window['humanizer_score']
     ```
 
     ### Dashboard link
@@ -60,7 +74,11 @@ description: "Get started with the Pangram Python SDK in minutes"
     from pangram import Pangram
 
     pangram_client = Pangram()
-    result = pangram_client.predict(text, public_dashboard_link=True)
+    result = pangram_client.predict(
+        text,
+        public_dashboard_link=True,
+        model="pangram-4",
+    )
     dashboard_link = result['dashboard_link']
     ```
   </Step>
@@ -76,10 +94,13 @@ description: "Get started with the Pangram Python SDK in minutes"
 
     pangram_client = Pangram()
 
-    bulk = pangram_client.submit_bulk(items=[
-        {"id": "row-001", "text": "First text to analyze"},
-        {"id": "row-002", "text": "Second text to analyze"},
-    ])
+    bulk = pangram_client.submit_bulk(
+        items=[
+            {"id": "row-001", "text": "First text to analyze"},
+            {"id": "row-002", "text": "Second text to analyze"},
+        ],
+        model="pangram-4",
+    )
 
     bulk_id = bulk["bulk_id"]
     status = pangram_client.wait_for_bulk(bulk_id, poll_interval=2)
@@ -139,6 +160,10 @@ description: "Get started with the Pangram Python SDK in minutes"
     - Percentage of text that was plagiarized
   </Step>
 </Steps>
+
+<Warning>
+For backward compatibility, the SDK temporarily permits omitted model selection, preserves the existing wire payload, and emits a `DeprecationWarning`. Pass `model="default"` or another value from `list_models()` in new code. The argument will be required after September 30, 2026.
+</Warning>
 
 ## Deprecated Methods
 

@@ -1,0 +1,59 @@
+---
+title: "Models"
+description: "Discover the AI detection models available to your API key"
+api: GET https://text.external-api.pangram.com/models
+---
+
+<Badge color="green">Current</Badge>
+
+Use the Models API to discover the model selectors your API key can currently use. The catalog reflects both your account's entitlements and current model availability, so do not hard-code it or assume every API key sees the same models. Preserve the order returned by the server.
+
+## GET /models
+
+```
+GET https://text.external-api.pangram.com/models
+```
+
+### Response
+
+<ResponseField name="models" type="array[string]">
+  Ordered model selectors currently available to the authenticated API key.
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET https://text.external-api.pangram.com/models \
+  -H "x-api-key: $PANGRAM_API_KEY"
+```
+
+```python Python SDK
+from pangram import Pangram
+
+client = Pangram()
+available_models = client.list_models()
+```
+
+</CodeGroup>
+
+**Example Response**
+
+```json
+{
+  "models": [
+    "default",
+    "pangram-4"
+  ]
+}
+```
+
+Use one of the returned values as the request-wide `model` on [`POST /task`](/api-reference/ai-detection) or [`POST /bulk`](/api-reference/bulk-api). The `default` selector follows Pangram's current default model without pinning your integration to a numbered generation.
+
+## Errors
+
+| Status Code | Description |
+|---|---|
+| `401 Unauthorized` | The `x-api-key` is missing or invalid. |
+| `500 Internal Server Error` | The model catalog could not be retrieved. |

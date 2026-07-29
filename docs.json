@@ -41,6 +41,7 @@
             "group": "REST API",
             "pages": [
               "api-reference/introduction",
+              "api-reference/models",
               "api-reference/ai-detection",
               "api-reference/bulk-api",
               "api-reference/file-external",

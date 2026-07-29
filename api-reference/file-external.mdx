@@ -22,6 +22,10 @@ POST https://file-external.api.pangram.com
 
 This endpoint must receive `multipart/form-data` with a form field named `files`. Requests without that field return `422 Unprocessable Entity` with `Field required` for `body.files`.
 
+<Note>
+File prediction currently uses Pangram's default model. This endpoint does not accept a `model` field.
+</Note>
+
 ### Request
 
 Send the request as `multipart/form-data`.

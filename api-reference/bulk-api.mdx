@@ -26,6 +26,8 @@ Timestamps are returned as Unix epoch seconds encoded as strings, such as `"1760
 
 The launch bulk limit is 1,000 billable units per request. A billable unit is one started word block per valid item — 100 words for Pangram 4, or 1,000 words for Pangram 3 — with a minimum of one unit per item. There is no separate item-count limit, but normal request-body limits still apply. Requests over the current bulk limit return `413 Payload Too Large`.
 
+One `model` applies to the entire bulk job; per-item model selectors are not supported. Use [`GET /models`](/api-reference/models) to discover the selectors available to your API key. The REST API temporarily accepts an omitted selector for backward compatibility and resolves it to `"default"`. New integrations should send it explicitly.
+
 ## POST /bulk
 
 Create a bulk AI detection job.
@@ -41,13 +43,13 @@ Provide exactly one of `items` or `text`.
 Valid request bodies use either a plain `text` list:
 
 ```json
-{"text": ["First text", "Second text"]}
+{"text": ["First text", "Second text"], "model": "pangram-4"}
 ```
 
 Or an `items` list when you want customer IDs returned with status and results:
 
 ```json
-{"items": [{"id": "row-001", "text": "First text"}]}
+{"items": [{"id": "row-001", "text": "First text"}], "model": "pangram-4"}
 ```
 
 Do not include both `text` and `items` in the same request. Item `id` values are optional, but must be unique when provided.
@@ -58,6 +60,10 @@ Do not include both `text` and `items` in the same request. Item `id` values are
 
 <ParamField body="text" type="array">
   List of input text strings. Use this simpler shape when you do not need customer item IDs.
+</ParamField>
+
+<ParamField body="model" type="string" default="default">
+  A selector returned by [`GET /models`](/api-reference/models). Applies to every item in the job.
 </ParamField>
 
 <Expandable title="Item object properties">
@@ -106,7 +112,8 @@ curl -X POST https://text.external-api.pangram.com/bulk \
     "items": [
       {"id": "row-001", "text": "First text to analyze"},
       {"id": "row-002", "text": "Second text to analyze"}
-    ]
+    ],
+    "model": "pangram-4"
   }'
 ```
 
@@ -115,10 +122,13 @@ from pangram import Pangram
 
 client = Pangram()
 
-bulk = client.submit_bulk(items=[
-    {"id": "row-001", "text": "First text to analyze"},
-    {"id": "row-002", "text": "Second text to analyze"},
-])
+bulk = client.submit_bulk(
+    items=[
+        {"id": "row-001", "text": "First text to analyze"},
+        {"id": "row-002", "text": "Second text to analyze"},
+    ],
+    model="pangram-4",
+)
 
 bulk_id = bulk["bulk_id"]
 ```
@@ -362,9 +372,10 @@ GET https://text.external-api.pangram.com/bulk/{bulk_id}/results?offset=0&limit=
       "stage": "STAGE_SUCCESS",
       "error": null,
       "result": {
+        "stage": "STAGE_SUCCESS",
         "text": "First text to analyze",
-        "version": "3.3",
-        "prediction": "We believe this is human-written",
+        "version": "4.0",
+        "prediction": "We believe that this entire text is human-written.",
         "prediction_short": "Human",
         "fraction_ai": 0.0,
         "fraction_ai_assisted": 0.0,
@@ -373,7 +384,20 @@ GET https://text.external-api.pangram.com/bulk/{bulk_id}/results?offset=0&limit=
         "num_ai_segments": 0,
         "num_ai_assisted_segments": 0,
         "num_human_segments": 1,
-        "windows": []
+        "windows": [
+          {
+            "text": "First text to analyze",
+            "label": "Human Written",
+            "ai_assistance_score": 0.02,
+            "confidence": "High",
+            "start_index": 0,
+            "end_index": 21,
+            "word_count": 4,
+            "token_length": 5,
+            "is_humanized": false,
+            "humanizer_score": 0.0
+          }
+        ]
       }
     }
   ],
@@ -395,8 +419,9 @@ GET https://text.external-api.pangram.com/bulk/{bulk_id}/results?offset=0&limit=
 |---|---|
 | `401 Unauthorized` | The `x-api-key` is missing or invalid. |
 | `402 Payment Required` | The account has insufficient credits. |
-| `403 Forbidden` | The API key does not own the requested bulk job. |
+| `403 Forbidden` | The requested model is not enabled for the API key, or the API key does not own the requested bulk job. |
 | `404 Not Found` | The requested bulk job does not exist. |
 | `413 Payload Too Large` | The bulk request exceeds the maximum billable units. |
-| `422 Unprocessable Entity` | The request is empty, contains both `items` and `text`, includes duplicate item IDs, or otherwise fails validation. |
+| `422 Unprocessable Entity` | The request is empty, contains both `items` and `text`, includes duplicate item IDs, uses an invalid model selector, or otherwise fails validation. |
 | `500 Internal Server Error` | There was an error processing the request. |
+| `503 Service Unavailable` | The requested model is temporarily unavailable. |
