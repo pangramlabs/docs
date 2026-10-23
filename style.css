@@ -1,0 +1,16 @@
+/* Copy icons default to gray-400 on gray-100 (~2.3:1); WCAG 1.4.11 needs 3:1. */
+[data-testid="copy-code-button"] svg {
+  color: #4b5563;
+}
+
+[data-testid="copy-code-button"]:hover svg {
+  color: #1f2937;
+}
+
+.dark [data-testid="copy-code-button"] svg {
+  color: rgb(255 255 255 / 0.7);
+}
+
+.dark [data-testid="copy-code-button"]:hover svg {
+  color: #ffffff;
+}
