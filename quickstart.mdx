@@ -51,7 +51,7 @@ description: "Get started with the Pangram Python SDK in minutes"
     pangram_client = Pangram()
     result = pangram_client.predict(text, model="pangram-4")
     stage = result['stage']  # "STAGE_SUCCESS" after predict() completes.
-    version = result['version']  # "4.0" for Pangram 4.
+    version = result['version']  # "4.1" for Pangram 4.1, "4.0" for Pangram 4.
 
     # Analysis with AI-assistance detection.
     fraction_ai = result['fraction_ai']

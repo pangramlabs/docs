@@ -4,7 +4,7 @@ description: "Detect AI-generated and AI-assisted text using the async inference
 api: POST https://text.external-api.pangram.com/task
 ---
 
-For more information on billing units and pricing, check our [pricing page for developers](https://www.pangram.com/pricing?category=developers).
+For more information on billing units and pricing, check our [pricing page](https://www.pangram.com/pricing).
 
 <Badge color="green">Current</Badge>
 
@@ -118,7 +118,7 @@ GET https://text.external-api.pangram.com/task/{task_id}
 </ResponseField>
 
 <ResponseField name="version" type="string">
-  The API version identifier (e.g., `"4.0"` for Pangram 4). Present on success.
+  The API version identifier (e.g., `"4.1"` for Pangram 4.1, `"4.0"` for Pangram 4). Present on success.
 </ResponseField>
 
 <ResponseField name="headline" type="string">
@@ -194,6 +194,9 @@ GET https://text.external-api.pangram.com/task/{task_id}
     </ResponseField>
     <ResponseField name="humanizer_score" type="float">
       Pangram 4 humanizer-head score from 0.0–1.0. Present on every Pangram 4 window.
+    </ResponseField>
+    <ResponseField name="class_probabilities" type="array">
+      Pangram 4.1 posterior probabilities for Human, AI-Assisted, and AI-Generated, in that order (array of 3 floats). Present on Pangram 4.1 windows.
     </ResponseField>
   </Expandable>
 </ResponseField>
