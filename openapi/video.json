@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Pangram Video API Preview",
+    "title": "Pangram Video API",
     "version": "1.1.0",
     "description": "Submit one video file to the production Video API and poll for results."
   },
