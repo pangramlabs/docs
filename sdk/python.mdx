@@ -99,7 +99,7 @@ A dictionary with the following fields after the task reaches `STAGE_SUCCESS`:
 </ResponseField>
 
 <ResponseField name="version" type="string">
-  The API version identifier (e.g., `"4.0"` for Pangram 4).
+  The API version identifier (e.g., `"4.1"` for Pangram 4.1, `"4.0"` for Pangram 4).
 </ResponseField>
 
 <ResponseField name="headline" type="string">
@@ -175,6 +175,9 @@ A dictionary with the following fields after the task reaches `STAGE_SUCCESS`:
     </ResponseField>
     <ResponseField name="humanizer_score" type="float">
       Pangram 4 humanizer-head score from 0.0–1.0. Present on every Pangram 4 window.
+    </ResponseField>
+    <ResponseField name="class_probabilities" type="array">
+      Pangram 4.1 posterior probabilities for Human, AI-Assisted, and AI-Generated, in that order (array of 3 floats). Present on Pangram 4.1 windows.
     </ResponseField>
   </Expandable>
 </ResponseField>
