@@ -1,0 +1,231 @@
+---
+title: "Video Detection"
+description: "Upload MP4, MOV, or WebM files to the Video API"
+openapi: openapi/video.json POST /v1/video/tasks
+---
+
+The Video API accepts a video file, analyzes sampled frames, and returns an asynchronous task ID.
+
+Use your API key with the production base URL:
+
+```text
+https://video.external-api.pangram.com
+```
+
+## Submit a video file
+
+Send `multipart/form-data` to `POST /v1/video/tasks` with one `file` field. Send your API key in the `x-api-key` header.
+
+| Form field | Type | Default | Description |
+| --- | --- | --- | --- |
+| `file` | File, required | — | One nonempty `.mp4`, `.mov`, or `.webm` file. |
+| `sampling_fps` | Number | `3` | Range `0.1`–`24`; capped by the source video's native frame rate. |
+| `hmm_smoothing` | Boolean | `false` | Smooth isolated changes in the frame timeline where the option is enabled. |
+| `detailed_labels` | Boolean | `false` | Include likely-human and likely-AI segment labels where the option is enabled. |
+
+Production enables these processing options. An option that has not been enabled in an environment returns `503`. Unknown or duplicate form fields are rejected.
+
+Do not set the multipart `Content-Type` header yourself: cURL or `requests` adds the required boundary.
+
+### cURL
+
+```bash
+export PANGRAM_VIDEO_API=https://video.external-api.pangram.com
+# Set PANGRAM_API_KEY to your API key.
+
+curl -sS "$PANGRAM_VIDEO_API/v1/video/tasks" \
+  -H "x-api-key: $PANGRAM_API_KEY" \
+  -F "file=@clip.mp4"
+```
+
+Optional processing fields can be included in the same form:
+
+```bash
+curl -sS "$PANGRAM_VIDEO_API/v1/video/tasks" \
+  -H "x-api-key: $PANGRAM_API_KEY" \
+  -F "file=@clip.mp4" \
+  -F "hmm_smoothing=true" \
+  -F "detailed_labels=true"
+```
+
+### Python
+
+The current Python SDK has no video-specific methods. This example uses the REST API directly:
+
+```python
+import os
+
+import requests
+
+base_url = "https://video.external-api.pangram.com"
+headers = {"x-api-key": os.environ["PANGRAM_API_KEY"]}
+
+with open("clip.mp4", "rb") as video:
+    response = requests.post(
+        f"{base_url}/v1/video/tasks",
+        headers=headers,
+        files={"file": ("clip.mp4", video, "video/mp4")},
+        timeout=(10, 300),
+    )
+response.raise_for_status()
+task_id = response.json()["task_id"]
+```
+
+Admission returns HTTP `202`:
+
+```json
+{
+  "task_id": "8db93921-df98-4edf-ae1d-8dd5839cd473"
+}
+```
+
+## Poll for the result
+
+Use the same key that submitted the task. Set `TASK_ID` to the returned `task_id` before running this cURL example:
+
+```bash
+curl -sS "$PANGRAM_VIDEO_API/v1/video/tasks/$TASK_ID" \
+  -H "x-api-key: $PANGRAM_API_KEY"
+```
+
+Processing stages are `STAGE_VIDEO_EXTRACTION`, `STAGE_VIDEO_INFERENCE`, and `STAGE_VIDEO_FINALIZING`. A task finishes at `STAGE_SUCCESS` or `STAGE_FAILED`.
+
+Continue from the Python submission example:
+
+```python
+import time
+
+deadline = time.monotonic() + 600
+while time.monotonic() < deadline:
+    response = requests.get(
+        f"{base_url}/v1/video/tasks/{task_id}",
+        headers=headers,
+        timeout=30,
+    )
+    response.raise_for_status()
+    result = response.json()
+    if result["stage"] == "STAGE_SUCCESS":
+        print(result["headline"], result["prediction_short"])
+        break
+    if result["stage"] == "STAGE_FAILED":
+        raise RuntimeError(result["error"])
+    time.sleep(1)
+else:
+    raise TimeoutError(f"Task {task_id} is still processing; continue polling it.")
+```
+
+During inference, `frames_processed` and `total_frames` appear when available. They count sampled frames, rather than elapsed video seconds, and can reset if processing retries.
+
+### Successful response
+
+This excerpt shows selected fields from a completed task; frame and segment arrays are omitted:
+
+```json
+{
+  "task_id": "8db93921-df98-4edf-ae1d-8dd5839cd473",
+  "stage": "STAGE_SUCCESS",
+  "schema_version": "1.1",
+  "headline": "No AI detected",
+  "prediction": "We believe the video is not AI-generated. We found no signs of AI content in the video frames.",
+  "prediction_short": "no_ai",
+  "version": "Pangram Image Flash 1.0",
+  "source": {
+    "file_name": "clip.mp4",
+    "content_type": "video/mp4",
+    "size_bytes": 286001,
+    "duration_ms": 3042,
+    "fps": 24.0,
+    "width": 640,
+    "height": 360,
+    "preview": null
+  },
+  "sampling": {
+    "fps": 3.0
+  },
+  "frames_processed": 10,
+  "total_frames": 10,
+  "fraction_ai": 0.0,
+  "fraction_human": 1.0,
+  "fraction_mixed": 0.0
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version` | `1.1` for the default public presentation. |
+| `headline` / `prediction` | Display headline and supporting sentence. |
+| `prediction_short` | One of `no_ai`, `mixed`, `ai`, or `unsure`. |
+| `source` | File information, inspected duration in milliseconds, dimensions, and native frame rate. The uploaded media is not returned. |
+| `version` | Frame model version, such as `Pangram Image Flash 1.0`. This is separate from the response schema version. |
+| `sampling.fps` | Effective frame sampling rate. |
+| `frames` | Sampled frame IDs, timestamps in milliseconds, and per-frame image results. |
+| `segments` | Timeline segments with `range.start_ms`, `range.end_ms`, labels, and frame IDs. |
+| `fraction_*` | Duration shares for human, AI, mixed, and unsure content. Detailed labels can also return `fraction_likely_human` and `fraction_likely_ai`. All applicable shares sum to one. |
+| `frames_processed` / `total_frames` | Frame counts; on success both equal the number of returned frames. |
+
+Segment labels can be `human`, `ai`, `mixed`, or `unsure`, with `likely_human` and `likely_ai` when detailed labels are enabled. Frame-level image predictions retain their own labels, including `Human` and `AI Detected`; do not apply the top-level video enum to frame results.
+
+### Response versions
+
+New clients should use the default `1.1` presentation. Add `?response_version=1.0` to the polling URL only when you need the legacy presentation:
+
+```bash
+curl -sS "$PANGRAM_VIDEO_API/v1/video/tasks/$TASK_ID?response_version=1.0" \
+  -H "x-api-key: $PANGRAM_API_KEY"
+```
+
+The `/v1` route, `schema_version`, and `Pangram Image Flash 1.0` model version describe different things.
+
+## Limits and retention
+
+- One file per request, up to **500 MiB (524,288,000 bytes)**.
+- At most **360 sampled frames**. At the default 3 FPS, this is approximately two minutes. A lower sampling rate can accommodate a longer source.
+- The source-duration ceiling is **10 minutes**, regardless of sampling FPS.
+- The API analyzes the uploaded file; it does not automatically trim long videos. Files exceeding processing limits fail.
+- Completed results are retained for **24 hours**. Polling an expired or unknown task returns `404`.
+
+## Billing
+
+The default video price is **USD 0.05 per second**, rounded up using the inspected source duration:
+
+| Source duration | Billable seconds | Default cost |
+| --- | --- | --- |
+| `3.042` seconds | `4` | `$0.20` |
+| `30` seconds | `30` | `$1.50` |
+| `60.001` seconds | `61` | `$3.05` |
+
+Only successful tasks are billed. Lower sampling FPS does not reduce billable source duration. API billing uses your API account balance.
+
+## Failures and retries
+
+The polling endpoint returns a failed task with HTTP `200` and `stage: "STAGE_FAILED"`:
+
+```json
+{
+  "task_id": "8db93921-df98-4edf-ae1d-8dd5839cd473",
+  "stage": "STAGE_FAILED",
+  "error": {
+    "error": "video container could not be opened",
+    "error_code": "invalid_image",
+    "retryable": false
+  }
+}
+```
+
+Immediate request failures use the same nested `error` object without a task ID or stage.
+
+| HTTP status | Meaning |
+| --- | --- |
+| `400` | Malformed request headers or body. |
+| `401` | Missing or invalid API key. |
+| `402` | Insufficient API funds. |
+| `403` | The key does not own the requested task. |
+| `404` | Unknown or expired task. |
+| `413` | Upload exceeds the file or request size limit. |
+| `415` | Unsupported request Content-Type. Use `multipart/form-data`. |
+| `422` | Missing, empty, unsupported, or duplicate file/form fields; invalid processing options. |
+| `429` | Account request rate exceeded. |
+| `500` | Unexpected service error. |
+| `503` | Video access, an option, or a required service is unavailable. |
+
+Submission does not accept an idempotency key. Each new POST creates another task and can incur another charge. Keep the accepted task ID and continue polling after a local timeout instead of uploading the same file again.

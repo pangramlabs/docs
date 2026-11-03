@@ -44,6 +44,7 @@
               "api-reference/models",
               "api-reference/ai-detection",
               "api-reference/image-detection",
+              "api-reference/video-detection",
               "api-reference/bulk-api",
               "api-reference/file-external",
               "api-reference/plagiarism-detection"
@@ -82,7 +83,10 @@
       "display": "interactive"
     },
     "examples": {
-      "languages": ["curl", "python"],
+      "languages": [
+        "curl",
+        "python"
+      ],
       "defaults": "required"
     }
   },
