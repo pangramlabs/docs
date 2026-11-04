@@ -10,7 +10,7 @@ pip install pangram-sdk
 ```
 
 <Note>
-Image 1.0 and Image Flash 1.0 use the [Image REST API](/api-reference/image-detection). Video uploads use the [Video API](/api-reference/video-detection). The current Python SDK methods below cover text, document extraction, and plagiarism; the linked API guides include Python HTTP examples.
+SDK 1.1.0 adds native [image](/api-reference/image-detection) and [video](/api-reference/video-detection) methods alongside text, document extraction, bulk, and plagiarism. Upgrade the SDK to use the media methods below.
 </Note>
 
 ## Pangram
@@ -32,6 +32,102 @@ client = Pangram(api_key="your-api-key")
 </ParamField>
 
 Raises `ValueError` if the API key is not provided and not set in the environment.
+
+---
+
+### predict_image()
+
+Submit one image and wait for its analysis:
+
+```python
+result = client.predict_image(
+    "image.png",
+    model="pangram-image-1",  # Or "pangram-image-flash-1".
+    timeout=300,
+    poll_interval=0.5,
+)
+print(result["prediction"], result["ai_likelihood"])
+```
+
+`image` accepts a path, raw bytes, or an open binary file, up to 32 MiB. A string is a path; the SDK handles base64 encoding. `model` is a required keyword argument. Use `pangram-image-1`, `pangram-image-flash-1`, `pangram-image-0.2`, or `default` (currently Image 0.2).
+
+Returns an `ImageResult` dictionary containing the verdict, score, confidence, detection source, version, heatmap, metadata, and thumbnail. Model fields can be `None` for a provenance-only result. Caller-owned files remain open.
+
+### submit_image()
+
+```python
+task = client.submit_image("image.png", model="pangram-image-1", timeout=60)
+image_task_id = task["task_id"]
+```
+
+Accepts the same image inputs and required `model`, and returns a `MediaTaskSubmission` dictionary without polling. Save its task ID. Submission is sent once, with no automatic retry.
+
+### get_image_status()
+
+```python
+status = client.get_image_status(image_task_id, timeout=10)
+```
+
+Returns an `ImageTaskStatus` dictionary for a processing, successful, or failed task. Failed tasks have `stage="STAGE_FAILED"` and an `error` object.
+
+### wait_for_image()
+
+```python
+result = client.wait_for_image(image_task_id, timeout=300, poll_interval=0.5)
+```
+
+Poll an existing task and return its `ImageResult`. A failed task raises `MediaTaskError`, with `task_id` and `error` attributes. A timeout raises `MediaTaskTimeout`, with the accepted `task_id` available for resuming.
+
+### predict_video()
+
+```python
+result = client.predict_video("clip.mp4", timeout=600, poll_interval=1)
+print(result["headline"], result["prediction_short"])
+```
+
+Accepts an MP4, MOV, or WebM path, raw bytes, or a seekable binary file, up to 500 MiB. Supply `filename="clip.mp4"` for bytes or an unnamed stream. Paths stream from disk. Caller-owned files remain open and are read from their current position.
+
+Uses the API's processing defaults and returns a `VideoResult` dictionary in public schema `1.1`. Results contain the overall verdict, timeline segments, sampled frames, duration fractions, and source metadata. The top-level model version is `image-flash-1`, or `None` for a provenance-only result.
+
+### submit_video()
+
+```python
+task = client.submit_video("clip.mp4", timeout=300)
+video_task_id = task["task_id"]
+```
+
+Accepts the same inputs and optional `filename` as `predict_video()`, and returns a `MediaTaskSubmission` dictionary without polling. The request uploads only the file and is never automatically retried.
+
+### get_video_status()
+
+```python
+status = client.get_video_status(video_task_id, timeout=10)
+```
+
+Returns a `VideoTaskStatus` dictionary using schema `1.1`, including processing and failure states. Progress responses may include `frames_processed` and `total_frames`.
+
+### wait_for_video()
+
+```python
+result = client.wait_for_video(video_task_id, timeout=600, poll_interval=1)
+```
+
+Returns the completed `VideoResult`, or raises `MediaTaskError` or `MediaTaskTimeout` with the task ID preserved.
+
+### Media timeouts and errors
+
+```python
+from pangram import MediaTaskTimeout
+
+try:
+    result = client.predict_video("clip.mp4", timeout=60)
+except MediaTaskTimeout as error:
+    result = client.wait_for_video(error.task_id, timeout=600)
+```
+
+Prediction timeouts budget submission and polling. Polling intervals below 0.1 seconds are clamped to 0.1; values must be positive and finite. The SDK retries polling on temporary transport errors and HTTP 429/5xx responses, honoring numeric `Retry-After` delays. `MediaRequestError` exposes the HTTP `status_code` when available. File-opening errors use Python's normal exceptions.
+
+Keep the accepted task ID after a timeout. Media submission does not support idempotency keys, and another submission can create another billable task. The SDK never automatically retries a submission.
 
 ---
 

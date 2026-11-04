@@ -12,6 +12,20 @@ Use your API key with the production base URL:
 https://video.external-api.pangram.com
 ```
 
+## Python SDK
+
+Python SDK 1.1.0 or later supports native video uploads:
+
+```python
+from pangram import Pangram
+
+client = Pangram()  # Reads PANGRAM_API_KEY.
+result = client.predict_video("clip.mp4")
+print(result["headline"], result["prediction_short"])
+```
+
+The SDK streams the file and polls until completion using the API's processing defaults. It accepts a path, raw bytes, or a seekable binary file; supply `filename="clip.mp4"` for bytes or an unnamed stream. For separate submission and progress polling, use `submit_video()`, `get_video_status()`, and `wait_for_video()`. See the [SDK reference](/sdk/python).
+
 ## Submit a video file
 
 Send `multipart/form-data` to `POST /v1/video/tasks` with one `file` field. Send your API key in the `x-api-key` header.
@@ -33,9 +47,9 @@ curl -sS "$PANGRAM_VIDEO_API/v1/video/tasks" \
   -F "file=@clip.mp4"
 ```
 
-### Python
+### Python REST
 
-The current Python SDK has no video-specific methods. This example uses the REST API directly:
+This example calls the REST API directly:
 
 ```python
 import os
