@@ -152,12 +152,6 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
-                  "detailed_labels": {
-                    "default": false,
-                    "description": "Include likely_human and likely_ai segment labels and their duration fractions. The default 1.1 response keeps the overall prediction_short as no_ai, mixed, ai, or unsure. The legacy 1.0 response reports a graded overall verdict.",
-                    "title": "Detailed Labels",
-                    "type": "boolean"
-                  },
                   "file": {
                     "type": "string",
                     "format": "binary",

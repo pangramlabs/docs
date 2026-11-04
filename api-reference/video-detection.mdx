@@ -16,12 +16,7 @@ https://video.external-api.pangram.com
 
 Send `multipart/form-data` to `POST /v1/video/tasks` with one `file` field. Send your API key in the `x-api-key` header.
 
-| Form field | Type | Default | Description |
-| --- | --- | --- | --- |
-| `file` | File, required | — | One nonempty `.mp4`, `.mov`, or `.webm` file. |
-| `detailed_labels` | Boolean | `false` | Include likely-human and likely-AI segment labels and their duration fractions. |
-
-With `detailed_labels=true`, the default `1.1` response still uses `no_ai`, `mixed`, `ai`, or `unsure` for the overall `prediction_short`. Graded overall verdicts are available only in the legacy `1.0` presentation.
+The `file` field is required and must contain one nonempty `.mp4`, `.mov`, or `.webm` file.
 
 Unknown or duplicate form fields are rejected.
 
@@ -36,15 +31,6 @@ export PANGRAM_VIDEO_API=https://video.external-api.pangram.com
 curl -sS "$PANGRAM_VIDEO_API/v1/video/tasks" \
   -H "x-api-key: $PANGRAM_API_KEY" \
   -F "file=@clip.mp4"
-```
-
-Include detailed labels in the same form:
-
-```bash
-curl -sS "$PANGRAM_VIDEO_API/v1/video/tasks" \
-  -H "x-api-key: $PANGRAM_API_KEY" \
-  -F "file=@clip.mp4" \
-  -F "detailed_labels=true"
 ```
 
 ### Python
@@ -158,10 +144,10 @@ This excerpt shows selected fields from a completed task; frame and segment arra
 | `sampling.fps` | Effective frame sampling rate. |
 | `frames` | Sampled frame IDs, timestamps in milliseconds, and per-frame image results. |
 | `segments` | Timeline segments with `range.start_ms`, `range.end_ms`, labels, and frame IDs. |
-| `fraction_*` | Duration shares for human, AI, mixed, and unsure content. Detailed labels can also return `fraction_likely_human` and `fraction_likely_ai`. All applicable shares sum to one. |
+| `fraction_*` | Duration shares for human, AI, mixed, unsure, likely-human, and likely-AI content. All applicable shares sum to one. |
 | `frames_processed` / `total_frames` | Frame counts; on success both equal the number of returned frames. |
 
-Segment labels can be `human`, `ai`, `mixed`, or `unsure`, with `likely_human` and `likely_ai` when detailed labels are enabled. Frame-level image predictions retain their own labels, including `Human` and `AI Detected`; do not apply the top-level video enum to frame results.
+Segment labels can be `human`, `likely_human`, `unsure`, `likely_ai`, `ai`, or `mixed`. Frame-level image predictions retain their own labels, including `Human` and `AI Detected`; do not apply the top-level video enum to frame results.
 
 ### Response versions
 
