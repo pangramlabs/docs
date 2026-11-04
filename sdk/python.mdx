@@ -37,7 +37,7 @@ Raises `ValueError` if the API key is not provided and not set in the environmen
 
 ### predict_image()
 
-Submit one image and wait for its analysis:
+Submit one image and wait for its analysis.
 
 ```python
 result = client.predict_image(
@@ -49,70 +49,330 @@ result = client.predict_image(
 print(result["prediction"], result["ai_likelihood"])
 ```
 
-`image` accepts a path, raw bytes, or an open binary file, up to 32 MiB. A string is a path; the SDK handles base64 encoding. `model` is a required keyword argument. Use `pangram-image-1`, `pangram-image-flash-1`, `pangram-image-0.2`, or `default` (currently Image 0.2).
+**Parameters**
 
-Returns an `ImageResult` dictionary containing the verdict, score, confidence, detection source, version, heatmap, metadata, and thumbnail. Model fields can be `None` for a provenance-only result. Caller-owned files remain open.
+<ParamField body="image" type="str | PathLike | bytes | bytearray | BinaryIO" required>
+  Image path, raw bytes, or an open binary file, up to 32 MiB. Strings are paths. The SDK handles base64 encoding. Caller-owned files remain open and are read from their current position.
+</ParamField>
+
+<ParamField body="model" type="string" required>
+  Required keyword-only selector: `pangram-image-1`, `pangram-image-flash-1`, `pangram-image-0.2`, or `default` (currently Image 0.2).
+</ParamField>
+
+<ParamField body="timeout" type="float" default="300">
+  Keyword-only timeout in seconds for submission and polling combined. Must be positive and finite.
+</ParamField>
+
+<ParamField body="poll_interval" type="float" default="0.5">
+  Keyword-only delay in seconds between status requests. Must be positive and finite; values below `0.1` are clamped to `0.1`.
+</ParamField>
+
+**Returns**
+
+An `ImageResult` dictionary after successful analysis:
+
+<ResponseField name="task_id" type="string">
+  The accepted task ID.
+</ResponseField>
+
+<ResponseField name="stage" type="string">
+  `STAGE_SUCCESS`.
+</ResponseField>
+
+<ResponseField name="prediction" type="string">
+  One of `AI Detected`, `Likely AI`, `Unsure`, `Likely No AI`, `No AI`, or `Partially AI`.
+</ResponseField>
+
+<ResponseField name="ai_likelihood" type="float | None">
+  Model score from 0 to 1; `None` for a provenance-only result.
+</ResponseField>
+
+<ResponseField name="confidence" type="string | None">
+  `Low`, `Medium`, or `High`; `None` for a provenance-only result.
+</ResponseField>
+
+<ResponseField name="detection_source" type="string">
+  `model` for model inference or `c2pa` when validated content provenance determines the result.
+</ResponseField>
+
+<ResponseField name="version" type="string | None">
+  Image model display version, such as `Pangram Image 1.0`; `None` for a provenance-only result.
+</ResponseField>
+
+<ResponseField name="heatmap" type="dict | None">
+  Patch scores in `grid` and their input-pixel spacing in `patch_stride`; `None` for a provenance-only result.
+</ResponseField>
+
+<ResponseField name="metadata" type="dict">
+  Content provenance (C2PA), software, and camera metadata when available.
+</ResponseField>
+
+<ResponseField name="thumbnail" type="dict | None">
+  Metadata-stripped JPEG `data_url`, `width`, and `height`, or `None`.
+</ResponseField>
 
 ### submit_image()
+
+Submit one image and receive a task ID.
 
 ```python
 task = client.submit_image("image.png", model="pangram-image-1", timeout=60)
 image_task_id = task["task_id"]
 ```
 
-Accepts the same image inputs and required `model`, and returns a `MediaTaskSubmission` dictionary without polling. Save its task ID. Submission is sent once, with no automatic retry.
+**Parameters**
+
+<ParamField body="image" type="str | PathLike | bytes | bytearray | BinaryIO" required>
+  Image path, raw bytes, or an open binary file, up to 32 MiB. Strings are paths. The SDK handles base64 encoding. Caller-owned files remain open and are read from their current position.
+</ParamField>
+
+<ParamField body="model" type="string" required>
+  Required keyword-only selector: `pangram-image-1`, `pangram-image-flash-1`, `pangram-image-0.2`, or `default` (currently Image 0.2).
+</ParamField>
+
+<ParamField body="timeout" type="float" default="60">
+  Keyword-only timeout in seconds for the submission request. Must be positive and finite.
+</ParamField>
+
+**Returns**
+
+A `MediaTaskSubmission` dictionary without polling:
+
+<ResponseField name="task_id" type="string">
+  The accepted task UUID. Save it to retrieve status or wait for the result. Submission is sent once, with no automatic retry.
+</ResponseField>
 
 ### get_image_status()
+
+Retrieve the current task status with one request.
 
 ```python
 status = client.get_image_status(image_task_id, timeout=10)
 ```
 
-Returns an `ImageTaskStatus` dictionary for a processing, successful, or failed task. Failed tasks have `stage="STAGE_FAILED"` and an `error` object.
+**Parameters**
+
+<ParamField body="task_id" type="string" required>
+  The UUID returned by `submit_image()`.
+</ParamField>
+
+<ParamField body="timeout" type="float" default="10">
+  Keyword-only timeout in seconds for the status request. Must be positive and finite.
+</ParamField>
+
+**Returns**
+
+An `ImageTaskStatus` dictionary containing `task_id` and `stage`. Processing stages are `STAGE_IMAGE_INFERENCE` and `STAGE_IMAGE_FINALIZING`. A successful task includes the `ImageResult` fields described under `predict_image()`; a failed task has `stage="STAGE_FAILED"` and an `error` object with `error`, `error_code`, and `retryable`. This method returns failed task statuses without raising `MediaTaskError`.
 
 ### wait_for_image()
+
+Poll an existing task until analysis completes.
 
 ```python
 result = client.wait_for_image(image_task_id, timeout=300, poll_interval=0.5)
 ```
 
-Poll an existing task and return its `ImageResult`. A failed task raises `MediaTaskError`, with `task_id` and `error` attributes. A timeout raises `MediaTaskTimeout`, with the accepted `task_id` available for resuming.
+**Parameters**
+
+<ParamField body="task_id" type="string" required>
+  The UUID returned by `submit_image()`.
+</ParamField>
+
+<ParamField body="timeout" type="float" default="300">
+  Keyword-only timeout in seconds for polling. Must be positive and finite.
+</ParamField>
+
+<ParamField body="poll_interval" type="float" default="0.5">
+  Keyword-only delay in seconds between status requests. Must be positive and finite; values below `0.1` are clamped to `0.1`.
+</ParamField>
+
+**Returns**
+
+An `ImageResult` dictionary with the same fields as `predict_image()`.
+
+A failed task raises `MediaTaskError`, with `task_id` and `error` attributes. A timeout raises `MediaTaskTimeout`, with the accepted `task_id` available for resuming.
 
 ### predict_video()
+
+Upload one video and wait for its analysis.
 
 ```python
 result = client.predict_video("clip.mp4", timeout=600, poll_interval=1)
 print(result["headline"], result["prediction_short"])
 ```
 
-Accepts an MP4, MOV, or WebM path, raw bytes, or a seekable binary file, up to 500 MiB. Supply `filename="clip.mp4"` for bytes or an unnamed stream. Paths stream from disk. Caller-owned files remain open and are read from their current position.
+**Parameters**
 
-Uses the API's processing defaults and returns a `VideoResult` dictionary in public schema `1.1`. Results contain the overall verdict, timeline segments, sampled frames, duration fractions, and source metadata. The top-level model version is `image-flash-1`, or `None` for a provenance-only result.
+<ParamField body="video" type="str | PathLike | bytes | bytearray | BinaryIO" required>
+  MP4, MOV, or WebM path, raw bytes, or a seekable binary file, up to 500 MiB. Paths stream from disk. Caller-owned files remain open and are read from their current position.
+</ParamField>
+
+<ParamField body="filename" type="string | None" default="None">
+  Keyword-only upload filename, including its `.mp4`, `.mov`, or `.webm` extension. Required for bytes or an unnamed stream; otherwise inferred from the file.
+</ParamField>
+
+<ParamField body="timeout" type="float" default="600">
+  Keyword-only timeout in seconds for submission and polling combined. Must be positive and finite.
+</ParamField>
+
+<ParamField body="poll_interval" type="float" default="1">
+  Keyword-only delay in seconds between status requests. Must be positive and finite; values below `0.1` are clamped to `0.1`.
+</ParamField>
+
+**Returns**
+
+A `VideoResult` dictionary using response schema `1.1`:
+
+<ResponseField name="task_id" type="string">
+  The accepted task ID.
+</ResponseField>
+
+<ResponseField name="stage" type="string">
+  `STAGE_SUCCESS`.
+</ResponseField>
+
+<ResponseField name="schema_version" type="string">
+  `1.1`.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Task creation time in ISO 8601 format.
+</ResponseField>
+
+<ResponseField name="prediction_short" type="string">
+  Overall verdict: `no_ai`, `mixed`, `ai`, or `unsure`.
+</ResponseField>
+
+<ResponseField name="headline" type="string">
+  Display headline: `No AI detected`, `AI Detected`, or `Unsure`.
+</ResponseField>
+
+<ResponseField name="prediction" type="string">
+  Supporting explanation for display.
+</ResponseField>
+
+<ResponseField name="confidence" type="string | None">
+  `Low`, `Medium`, or `High` when supplied; otherwise `None` or omitted.
+</ResponseField>
+
+<ResponseField name="detection_source" type="string">
+  `model` for frame analysis or `c2pa` when validated content provenance determines the result.
+</ResponseField>
+
+<ResponseField name="version" type="string | None">
+  Frame model ID `image-flash-1`, or `None` for a provenance-only result.
+</ResponseField>
+
+<ResponseField name="source" type="dict">
+  `file_name`, `content_type`, `size_bytes`, `duration_ms`, `width`, `height`, and optional native `fps`. The uploaded video is not returned.
+</ResponseField>
+
+<ResponseField name="metadata" type="dict">
+  Content provenance (C2PA), software, and camera metadata when available.
+</ResponseField>
+
+<ResponseField name="sampling" type="dict | None">
+  Effective frame sampling rate in `fps`, or `None` when frame analysis was not used.
+</ResponseField>
+
+<ResponseField name="frames" type="list[dict]">
+  Sampled frames with `frame_id`, `timestamp_ms`, and an image `result`. Frame predictions use `Human`, `AI Detected`, `Mixed`, or `Unsure`.
+</ResponseField>
+
+<ResponseField name="segments" type="list[dict]">
+  Timeline segments with `id`, `range.start_ms`, `range.end_ms`, `prediction_short`, `prediction`, and `frame_ids`. Segment labels are `human`, `likely_human`, `unsure`, `likely_ai`, `ai`, or `mixed`.
+</ResponseField>
+
+<ResponseField name="fraction_ai / fraction_human / fraction_mixed" type="float">
+  Duration shares from 0 to 1. Additional `fraction_unsure`, `fraction_likely_ai`, and `fraction_likely_human` fields are included when nonzero. All applicable shares sum to one.
+</ResponseField>
+
+<ResponseField name="frames_processed / total_frames" type="integer">
+  On success, both equal the number of returned frames.
+</ResponseField>
+
+See the [video response example](/api-reference/video-detection#successful-response) for frame and segment entries.
 
 ### submit_video()
+
+Upload one video and receive a task ID.
 
 ```python
 task = client.submit_video("clip.mp4", timeout=300)
 video_task_id = task["task_id"]
 ```
 
-Accepts the same inputs and optional `filename` as `predict_video()`, and returns a `MediaTaskSubmission` dictionary without polling. The request uploads only the file and is never automatically retried.
+**Parameters**
+
+<ParamField body="video" type="str | PathLike | bytes | bytearray | BinaryIO" required>
+  MP4, MOV, or WebM path, raw bytes, or a seekable binary file, up to 500 MiB. Paths stream from disk. Caller-owned files remain open and are read from their current position.
+</ParamField>
+
+<ParamField body="filename" type="string | None" default="None">
+  Keyword-only upload filename, including its `.mp4`, `.mov`, or `.webm` extension. Required for bytes or an unnamed stream; otherwise inferred from the file.
+</ParamField>
+
+<ParamField body="timeout" type="float" default="300">
+  Keyword-only timeout in seconds for the upload request. Must be positive and finite.
+</ParamField>
+
+**Returns**
+
+A `MediaTaskSubmission` dictionary without polling:
+
+<ResponseField name="task_id" type="string">
+  The accepted task UUID. Save it to retrieve status or wait for the result. Submission is sent once, with no automatic retry.
+</ResponseField>
 
 ### get_video_status()
+
+Retrieve the current task status with one request.
 
 ```python
 status = client.get_video_status(video_task_id, timeout=10)
 ```
 
-Returns a `VideoTaskStatus` dictionary using schema `1.1`, including processing and failure states. Progress responses may include `frames_processed` and `total_frames`.
+**Parameters**
+
+<ParamField body="task_id" type="string" required>
+  The UUID returned by `submit_video()`.
+</ParamField>
+
+<ParamField body="timeout" type="float" default="10">
+  Keyword-only timeout in seconds for the status request. Must be positive and finite.
+</ParamField>
+
+**Returns**
+
+A `VideoTaskStatus` dictionary using response schema `1.1`, containing `task_id` and `stage`. Processing stages are `STAGE_VIDEO_EXTRACTION`, `STAGE_VIDEO_INFERENCE`, and `STAGE_VIDEO_FINALIZING`. Progress responses include `frames_processed` and `total_frames` when available. A successful task includes the `VideoResult` fields described under `predict_video()`; a failed task has `stage="STAGE_FAILED"` and an `error` object with `error`, `error_code`, and `retryable`. This method returns failed task statuses without raising `MediaTaskError`.
 
 ### wait_for_video()
+
+Poll an existing task until analysis completes.
 
 ```python
 result = client.wait_for_video(video_task_id, timeout=600, poll_interval=1)
 ```
 
-Returns the completed `VideoResult`, or raises `MediaTaskError` or `MediaTaskTimeout` with the task ID preserved.
+**Parameters**
+
+<ParamField body="task_id" type="string" required>
+  The UUID returned by `submit_video()`.
+</ParamField>
+
+<ParamField body="timeout" type="float" default="600">
+  Keyword-only timeout in seconds for polling. Must be positive and finite.
+</ParamField>
+
+<ParamField body="poll_interval" type="float" default="1">
+  Keyword-only delay in seconds between status requests. Must be positive and finite; values below `0.1` are clamped to `0.1`.
+</ParamField>
+
+**Returns**
+
+A `VideoResult` dictionary with the same fields as `predict_video()`.
+
+A failed task raises `MediaTaskError`, with `task_id` and `error` attributes. A timeout raises `MediaTaskTimeout`, with the accepted `task_id` available for resuming.
 
 ### Media timeouts and errors
 

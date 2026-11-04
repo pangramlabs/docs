@@ -14,7 +14,7 @@ The Image API accepts one base64-encoded image and returns a task ID. Poll that 
 | Pangram Image Flash 1.0 | `pangram-image-flash-1` | `Pangram Image Flash 1.0` |
 | Server default | `default`, or omit `model` | The model selected by the service |
 
-Pass the model explicitly when you want Image 1.0 or Flash. The current production default is Image 0.2; omitting `model` does not select Image 1.0. Availability can differ by environment, and an unavailable model returns `503`.
+Pass the model explicitly when you want Image 1.0 or Flash. The current production default is Image 0.2; omitting `model` does not select Image 1.0.
 
 The model's `1.0` version is separate from the `/v1` API route and the Python package version. The text Models API and `Pangram.list_models()` describe text models; they do not list image models.
 

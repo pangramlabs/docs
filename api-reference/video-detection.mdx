@@ -117,7 +117,7 @@ During inference, `frames_processed` and `total_frames` appear when available. T
 
 ### Successful response
 
-This excerpt shows selected fields from a completed task; frame and segment arrays are omitted:
+This excerpt shows selected fields from a completed task, including one sampled frame and one timeline segment. Additional frame entries and their segment references are omitted, and the thumbnail's base64 content is abbreviated:
 
 ```json
 {
@@ -140,6 +140,44 @@ This excerpt shows selected fields from a completed task; frame and segment arra
   "sampling": {
     "fps": 3.0
   },
+  "frames": [
+    {
+      "frame_id": "frame-000000",
+      "timestamp_ms": 0,
+      "result": {
+        "prediction": "Human",
+        "ai_likelihood": 0.02,
+        "confidence": "High",
+        "detection_source": "model",
+        "version": "Pangram Image Flash 1.0",
+        "heatmap": {
+          "grid": [[0.1, 0.2]],
+          "patch_stride": 16
+        },
+        "metadata": {
+          "software": [],
+          "camera": null
+        },
+        "thumbnail": {
+          "data_url": "data:image/jpeg;base64,<JPEG_BYTES>",
+          "width": 256,
+          "height": 144
+        }
+      }
+    }
+  ],
+  "segments": [
+    {
+      "id": "segment-000000",
+      "range": {
+        "start_ms": 0,
+        "end_ms": 3042
+      },
+      "prediction_short": "human",
+      "prediction": "Human",
+      "frame_ids": ["frame-000000"]
+    }
+  ],
   "frames_processed": 10,
   "total_frames": 10,
   "fraction_ai": 0.0,
@@ -150,7 +188,7 @@ This excerpt shows selected fields from a completed task; frame and segment arra
 
 | Field | Meaning |
 | --- | --- |
-| `schema_version` | `1.1` for the default public presentation. |
+| `schema_version` | Response format version, `1.1` by default. |
 | `headline` / `prediction` | Display headline and supporting sentence. |
 | `prediction_short` | One of `no_ai`, `mixed`, `ai`, or `unsure`. |
 | `source` | File information, inspected duration in milliseconds, dimensions, and native frame rate. The uploaded media is not returned. |
@@ -165,14 +203,14 @@ Segment labels can be `human`, `likely_human`, `unsure`, `likely_ai`, `ai`, or `
 
 ### Response versions
 
-New clients should use the default `1.1` presentation. Add `?response_version=1.0` to the polling URL only when you need the legacy presentation:
+Responses use version `1.1` by default. Existing integrations that require response version `1.0` can add `?response_version=1.0` to the polling URL:
 
 ```bash
 curl -sS "$PANGRAM_VIDEO_API/v1/video/tasks/$TASK_ID?response_version=1.0" \
   -H "x-api-key: $PANGRAM_API_KEY"
 ```
 
-The `/v1` route, `schema_version`, and `image-flash-1` model ID describe different things. The legacy `1.0` response retains the older `Pangram Image Flash 1.0` display value and source fields.
+Response format versions are independent of model versions. Response version `1.0` uses `Pangram Image Flash 1.0` for the model version and retains its original source fields.
 
 ## Limits and retention
 
@@ -221,9 +259,9 @@ Immediate request failures use the same nested `error` object without a task ID 
 | `404` | Unknown or expired task. |
 | `413` | Upload exceeds the file or request size limit. |
 | `415` | Unsupported request Content-Type. Use `multipart/form-data`. |
-| `422` | Missing, empty, unsupported, or duplicate file/form fields; invalid processing options. |
+| `422` | Missing, empty, unsupported, or duplicate file/form fields. |
 | `429` | Account request rate exceeded. |
 | `500` | Unexpected service error. |
-| `503` | Video access, an option, or a required service is unavailable. |
+| `503` | The video service is temporarily unavailable. |
 
 Submission does not accept an idempotency key. Each new POST creates another task and can incur another charge. Keep the accepted task ID and continue polling after a local timeout instead of uploading the same file again.

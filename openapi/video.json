@@ -1608,11 +1608,6 @@
               }
             ]
           },
-          "detailed_labels": {
-            "type": "boolean",
-            "title": "Detailed Labels",
-            "default": false
-          },
           "ai_segment_gate": {
             "anyOf": [
               {
@@ -1706,7 +1701,6 @@
             "title": "Headline"
           }
         },
-        "additionalProperties": false,
         "type": "object",
         "required": [
           "prediction_short",
@@ -1728,7 +1722,7 @@
           "headline"
         ],
         "title": "VideoTaskPublicSucceededResponse",
-        "description": "Presentation of a validated stored result; never persisted by workers."
+        "description": "Completed video analysis using response schema 1.1."
       },
       "VideoTaskSucceededResponse": {
         "properties": {
@@ -1842,11 +1836,6 @@
               }
             ]
           },
-          "detailed_labels": {
-            "type": "boolean",
-            "title": "Detailed Labels",
-            "default": false
-          },
           "ai_segment_gate": {
             "anyOf": [
               {
@@ -1921,7 +1910,6 @@
             "default": 0
           }
         },
-        "additionalProperties": false,
         "type": "object",
         "required": [
           "prediction_short",
