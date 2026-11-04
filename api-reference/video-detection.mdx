@@ -19,13 +19,11 @@ Send `multipart/form-data` to `POST /v1/video/tasks` with one `file` field. Send
 | Form field | Type | Default | Description |
 | --- | --- | --- | --- |
 | `file` | File, required | — | One nonempty `.mp4`, `.mov`, or `.webm` file. |
-| `sampling_fps` | Number | `3` | Range `0.1`–`24`; capped by the source video's native frame rate. |
-| `hmm_smoothing` | Boolean | `false` | Smooth isolated changes in the frame timeline where the option is enabled. |
 | `detailed_labels` | Boolean | `false` | Include likely-human and likely-AI segment labels and their duration fractions. |
 
 With `detailed_labels=true`, the default `1.1` response still uses `no_ai`, `mixed`, `ai`, or `unsure` for the overall `prediction_short`. Graded overall verdicts are available only in the legacy `1.0` presentation.
 
-Production enables these processing options. An option that has not been enabled in an environment returns `503`. Unknown or duplicate form fields are rejected.
+Unknown or duplicate form fields are rejected.
 
 Do not set the multipart `Content-Type` header yourself: cURL or `requests` adds the required boundary.
 
@@ -40,13 +38,12 @@ curl -sS "$PANGRAM_VIDEO_API/v1/video/tasks" \
   -F "file=@clip.mp4"
 ```
 
-Optional processing fields can be included in the same form:
+Include detailed labels in the same form:
 
 ```bash
 curl -sS "$PANGRAM_VIDEO_API/v1/video/tasks" \
   -H "x-api-key: $PANGRAM_API_KEY" \
   -F "file=@clip.mp4" \
-  -F "hmm_smoothing=true" \
   -F "detailed_labels=true"
 ```
 
@@ -180,8 +177,8 @@ The `/v1` route, `schema_version`, and `image-flash-1` model ID describe differe
 ## Limits and retention
 
 - One file per request, up to **500 MiB (524,288,000 bytes)**.
-- At most **360 sampled frames**. At the default 3 FPS, this is approximately two minutes. A lower sampling rate can accommodate a longer source.
-- The source-duration ceiling is **10 minutes**, regardless of sampling FPS.
+- At most **360 sampled frames**. Standard processing samples up to 3 frames per second, giving approximately two minutes of video.
+- The source-duration ceiling is **10 minutes**. Both the sampled-frame limit and the source-duration limit apply.
 - The API analyzes the uploaded file; it does not automatically trim long videos. Files exceeding processing limits fail.
 - Completed results are retained for **24 hours**. Polling an expired or unknown task returns `404`.
 
@@ -195,7 +192,7 @@ The default video price is **USD 0.05 per second**, rounded up using the inspect
 | `30` seconds | `30` | `$1.50` |
 | `60.001` seconds | `61` | `$3.05` |
 
-Only successful tasks are billed. Lower sampling FPS does not reduce billable source duration. API billing uses your API account balance.
+Only successful tasks are billed. Billing uses the full inspected source duration and your API account balance.
 
 ## Failures and retries
 

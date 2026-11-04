@@ -152,20 +152,6 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
-                  "sampling_fps": {
-                    "default": 3.0,
-                    "description": "Frames sampled per second, capped by the source video's native frame rate.",
-                    "maximum": 24.0,
-                    "minimum": 0.1,
-                    "title": "Sampling Fps",
-                    "type": "number"
-                  },
-                  "hmm_smoothing": {
-                    "default": false,
-                    "description": "Optional HMM smoothing of the frame timeline: a five-state Viterbi smoother over the detailed frame labels that removes isolated label flips without making any stretch look more AI or more human than its own frames.",
-                    "title": "Hmm Smoothing",
-                    "type": "boolean"
-                  },
                   "detailed_labels": {
                     "default": false,
                     "description": "Include likely_human and likely_ai segment labels and their duration fractions. The default 1.1 response keeps the overall prediction_short as no_ai, mixed, ai, or unsure. The legacy 1.0 response reports a graded overall verdict.",
