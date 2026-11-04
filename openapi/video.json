@@ -1,0 +1,1941 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Pangram Video API",
+    "version": "1.1.0",
+    "description": "Submit one video file to the production Video API and poll for results."
+  },
+  "servers": [
+    {
+      "url": "https://video.external-api.pangram.com"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "paths": {
+    "/v1/video/tasks": {
+      "post": {
+        "tags": [
+          "Video tasks"
+        ],
+        "summary": "Upload a video for analysis",
+        "operationId": "submitVideoTask",
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoTaskAcceptedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Payment Required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Unsupported Media Type"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "One nonempty MP4, MOV, or WebM file, up to 500 MiB (524,288,000 bytes)."
+                  }
+                },
+                "title": "VideoProcessingOptions",
+                "type": "object",
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/video/tasks/{task_id}": {
+      "get": {
+        "tags": [
+          "Video tasks"
+        ],
+        "summary": "Get Video Task",
+        "operationId": "getVideoTask",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          },
+          {
+            "name": "response_version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "1.0",
+                "1.1"
+              ],
+              "type": "string",
+              "default": "1.1",
+              "title": "Response Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/VideoTaskProcessingResponse"
+                        },
+                        {
+                          "$ref": "#/components/schemas/VideoTaskSucceededResponse"
+                        },
+                        {
+                          "$ref": "#/components/schemas/VideoTaskFailedResponse"
+                        }
+                      ],
+                      "discriminator": {
+                        "propertyName": "stage",
+                        "mapping": {
+                          "STAGE_VIDEO_EXTRACTION": "#/components/schemas/VideoTaskProcessingResponse",
+                          "STAGE_VIDEO_INFERENCE": "#/components/schemas/VideoTaskProcessingResponse",
+                          "STAGE_VIDEO_FINALIZING": "#/components/schemas/VideoTaskProcessingResponse",
+                          "STAGE_SUCCESS": "#/components/schemas/VideoTaskSucceededResponse",
+                          "STAGE_FAILED": "#/components/schemas/VideoTaskFailedResponse"
+                        }
+                      }
+                    },
+                    {
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/VideoTaskPublicProcessingResponse"
+                        },
+                        {
+                          "$ref": "#/components/schemas/VideoTaskPublicSucceededResponse"
+                        },
+                        {
+                          "$ref": "#/components/schemas/VideoTaskPublicFailedResponse"
+                        }
+                      ],
+                      "discriminator": {
+                        "propertyName": "stage",
+                        "mapping": {
+                          "STAGE_VIDEO_EXTRACTION": "#/components/schemas/VideoTaskPublicProcessingResponse",
+                          "STAGE_VIDEO_INFERENCE": "#/components/schemas/VideoTaskPublicProcessingResponse",
+                          "STAGE_VIDEO_FINALIZING": "#/components/schemas/VideoTaskPublicProcessingResponse",
+                          "STAGE_SUCCESS": "#/components/schemas/VideoTaskPublicSucceededResponse",
+                          "STAGE_FAILED": "#/components/schemas/VideoTaskPublicFailedResponse"
+                        }
+                      }
+                    }
+                  ],
+                  "title": "Response Get Video Task V1 Video Tasks  Task Id  Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Payment Required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ImageApiC2pa": {
+        "properties": {
+          "manifest_store": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/JsonValue"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manifest Store",
+            "description": "C2PA SDK manifest store, preserved for consumer interpretation."
+          },
+          "present": {
+            "type": "boolean",
+            "title": "Present",
+            "default": false
+          },
+          "validation_state": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImageC2paValidationState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "claim_generator_info": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImageApiSoftwareAgent"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "issuer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issuer"
+          },
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/ImageApiC2paAction"
+            },
+            "type": "array",
+            "title": "Actions"
+          }
+        },
+        "type": "object",
+        "title": "ImageApiC2pa"
+      },
+      "ImageApiC2paAction": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "digital_source_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Digital Source Type"
+          },
+          "software_agent": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImageApiSoftwareAgent"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "watermark_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Watermark Name",
+            "description": "Watermark application declared by this C2PA action, not independently detected in pixels."
+          },
+          "image_regions": {
+            "items": {
+              "$ref": "#/components/schemas/ImageRegion"
+            },
+            "type": "array",
+            "title": "Image Regions"
+          },
+          "provenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImageApiC2paActionProvenance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "changes": {
+            "$ref": "#/components/schemas/JsonValue"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action",
+          "digital_source_type",
+          "software_agent"
+        ],
+        "title": "ImageApiC2paAction"
+      },
+      "ImageApiC2paActionProvenance": {
+        "properties": {
+          "manifest_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manifest Id"
+          },
+          "relationship": {
+            "type": "string",
+            "enum": [
+              "active",
+              "ingredient",
+              "unknown"
+            ],
+            "title": "Relationship",
+            "default": "unknown"
+          },
+          "issuer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issuer"
+          }
+        },
+        "type": "object",
+        "title": "ImageApiC2paActionProvenance"
+      },
+      "ImageApiCamera": {
+        "properties": {
+          "make": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Make"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "captured_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImageApiCapturedAt"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImageCameraSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "make",
+          "model",
+          "captured_at",
+          "source"
+        ],
+        "title": "ImageApiCamera"
+      },
+      "ImageApiCapturedAt": {
+        "properties": {
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImageCaptureTimeSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "timezone_known": {
+            "type": "boolean",
+            "title": "Timezone Known"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "source",
+          "timezone_known"
+        ],
+        "title": "ImageApiCapturedAt"
+      },
+      "ImageApiError": {
+        "properties": {
+          "error": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Error"
+          },
+          "error_code": {
+            "$ref": "#/components/schemas/ImageApiErrorCode"
+          },
+          "retryable": {
+            "type": "boolean",
+            "title": "Retryable"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error",
+          "error_code",
+          "retryable"
+        ],
+        "title": "ImageApiError"
+      },
+      "ImageApiErrorCode": {
+        "type": "string",
+        "enum": [
+          "unauthorized",
+          "forbidden",
+          "not_found",
+          "insufficient_credits",
+          "request_too_large",
+          "request_limit_exceeded",
+          "invalid_request",
+          "invalid_image",
+          "metadata_error",
+          "unsafe_image",
+          "image_safety_error",
+          "inference_out_of_memory",
+          "inference_error",
+          "service_unavailable",
+          "internal_error"
+        ],
+        "title": "ImageApiErrorCode"
+      },
+      "ImageApiHeatmap": {
+        "properties": {
+          "grid": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Grid"
+          },
+          "patch_stride": {
+            "type": "integer",
+            "title": "Patch Stride"
+          }
+        },
+        "type": "object",
+        "required": [
+          "grid",
+          "patch_stride"
+        ],
+        "title": "ImageApiHeatmap"
+      },
+      "ImageApiMetadata": {
+        "properties": {
+          "c2pa": {
+            "$ref": "#/components/schemas/ImageApiC2pa"
+          },
+          "software": {
+            "items": {
+              "$ref": "#/components/schemas/ImageApiSoftware"
+            },
+            "type": "array",
+            "title": "Software"
+          },
+          "camera": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImageApiCamera"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "ImageApiMetadata"
+      },
+      "ImageApiSoftware": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "role": {
+            "$ref": "#/components/schemas/ImageSoftwareRole"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ImageSoftwareSource"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "version",
+          "role",
+          "source"
+        ],
+        "title": "ImageApiSoftware"
+      },
+      "ImageApiSoftwareAgent": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "version"
+        ],
+        "title": "ImageApiSoftwareAgent"
+      },
+      "ImageC2paValidationState": {
+        "type": "string",
+        "enum": [
+          "invalid",
+          "valid",
+          "trusted"
+        ]
+      },
+      "ImageCameraSource": {
+        "type": "string",
+        "enum": [
+          "c2pa.metadata",
+          "exif",
+          "xmp"
+        ]
+      },
+      "ImageCaptureTimeSource": {
+        "type": "string",
+        "enum": [
+          "c2pa.metadata",
+          "exif.DateTimeOriginal",
+          "xmp.CreateDate"
+        ]
+      },
+      "ImageDetectionSource": {
+        "type": "string",
+        "enum": [
+          "model",
+          "c2pa"
+        ]
+      },
+      "ImagePredictionLabel": {
+        "type": "string",
+        "enum": [
+          "AI Detected",
+          "Human",
+          "Mixed",
+          "Unsure"
+        ]
+      },
+      "ImageRegion": {
+        "properties": {
+          "left": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Left"
+          },
+          "top": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Top"
+          },
+          "width": {
+            "type": "number",
+            "maximum": 100.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Width"
+          },
+          "height": {
+            "type": "number",
+            "maximum": 100.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Height"
+          }
+        },
+        "type": "object",
+        "required": [
+          "left",
+          "top",
+          "width",
+          "height"
+        ],
+        "title": "ImageRegion"
+      },
+      "ImageSoftwareRole": {
+        "type": "string",
+        "enum": [
+          "generator",
+          "editor",
+          "claim_generator",
+          "other"
+        ]
+      },
+      "ImageSoftwareSource": {
+        "type": "string",
+        "enum": [
+          "c2pa.actions",
+          "c2pa.claim_generator_info",
+          "exif.Software",
+          "xmp.CreatorTool"
+        ]
+      },
+      "ImageTaskRequestErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ImageApiError"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ImageTaskRequestErrorResponse"
+      },
+      "ImageTaskThumbnail": {
+        "properties": {
+          "data_url": {
+            "type": "string",
+            "maxLength": 150000,
+            "pattern": "^data:image/jpeg;base64,[A-Za-z0-9+/]+={0,2}$",
+            "title": "Data Url"
+          },
+          "width": {
+            "type": "integer",
+            "maximum": 256.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "maximum": 256.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Height"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "data_url",
+          "width",
+          "height"
+        ],
+        "title": "ImageTaskThumbnail"
+      },
+      "JsonValue": {},
+      "Sampling": {
+        "properties": {
+          "fps": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Fps"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "fps"
+        ],
+        "title": "Sampling"
+      },
+      "TimeRange": {
+        "properties": {
+          "start_ms": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Start Ms"
+          },
+          "end_ms": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "End Ms"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "start_ms",
+          "end_ms"
+        ],
+        "title": "TimeRange"
+      },
+      "VideoAiSegmentGate": {
+        "properties": {
+          "min_ai_ms": {
+            "type": "integer",
+            "title": "Min Ai Ms",
+            "default": 2000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "VideoAiSegmentGate",
+        "description": "When the verdict is not AI side, Likely AI segments and AI segments shorter than ``min_ai_ms`` are shown as\nUnsure (neighbouring segments with the same label merge), and the verdict follows the displayed segments."
+      },
+      "VideoFrame": {
+        "properties": {
+          "frame_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Frame Id"
+          },
+          "timestamp_ms": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Timestamp Ms"
+          },
+          "result": {
+            "$ref": "#/components/schemas/VideoFrameImageResult"
+          },
+          "smoothed_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "human",
+                  "likely_human",
+                  "unsure",
+                  "likely_ai",
+                  "ai",
+                  "mixed"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Smoothed Label"
+          },
+          "shot_change": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shot Change"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "frame_id",
+          "timestamp_ms",
+          "result"
+        ],
+        "title": "VideoFrame"
+      },
+      "VideoFrameImageResult": {
+        "properties": {
+          "stage": {
+            "type": "string",
+            "const": "STAGE_SUCCESS",
+            "title": "Stage",
+            "default": "STAGE_SUCCESS"
+          },
+          "prediction": {
+            "$ref": "#/components/schemas/ImagePredictionLabel"
+          },
+          "ai_likelihood": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Likelihood"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "Low",
+                  "Medium",
+                  "High"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "detection_source": {
+            "type": "string",
+            "const": "model",
+            "title": "Detection Source"
+          },
+          "version": {
+            "type": "string",
+            "const": "Pangram Image Flash 1.0",
+            "title": "Version"
+          },
+          "heatmap": {
+            "$ref": "#/components/schemas/ImageApiHeatmap"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ImageApiMetadata"
+          },
+          "thumbnail": {
+            "$ref": "#/components/schemas/ImageTaskThumbnail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "prediction",
+          "detection_source",
+          "version",
+          "heatmap",
+          "metadata",
+          "thumbnail"
+        ],
+        "title": "VideoFrameImageResult"
+      },
+      "VideoMixedDisplay": {
+        "properties": {
+          "min_share": {
+            "type": "number",
+            "title": "Min Share",
+            "default": 0.05
+          },
+          "min_cluster_frames": {
+            "type": "integer",
+            "title": "Min Cluster Frames",
+            "default": 3
+          },
+          "max_gap_frames": {
+            "type": "integer",
+            "title": "Max Gap Frames",
+            "default": 2
+          },
+          "fill_single_frame_gaps": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fill Single Frame Gaps"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "VideoMixedDisplay",
+        "description": "Heatmap-Mixed frames at most ``max_gap_frames`` ordinary frames apart form a cluster; clusters spanning fewer than\n``min_cluster_frames`` frames are shown as ordinary frames, and so is all Mixed when what remains covers less than\n``min_share`` of the video's frames. On the displayed timeline an ordinary stretch of at most ``max_gap_frames`` frames\nbetween two Mixed segments is shown as Mixed too, while the verdict counts the timeline before that filling."
+      },
+      "VideoSegment": {
+        "properties": {
+          "prediction_short": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "human",
+                  "mixed",
+                  "ai",
+                  "unsure"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "human",
+                  "likely_human",
+                  "unsure",
+                  "likely_ai",
+                  "ai",
+                  "mixed"
+                ]
+              }
+            ],
+            "title": "Prediction Short"
+          },
+          "prediction": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Prediction"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "Low",
+                  "Medium",
+                  "High"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Id"
+          },
+          "range": {
+            "$ref": "#/components/schemas/TimeRange"
+          },
+          "frame_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Frame Ids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "prediction_short",
+          "prediction",
+          "id",
+          "range",
+          "frame_ids"
+        ],
+        "title": "VideoSegment"
+      },
+      "VideoSmoothing": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "const": "hmm",
+            "title": "Method",
+            "default": "hmm"
+          },
+          "change_penalty": {
+            "type": "number",
+            "title": "Change Penalty",
+            "default": 12.0
+          },
+          "shot_change_discount": {
+            "type": "number",
+            "title": "Shot Change Discount",
+            "default": 0.5
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "VideoSmoothing",
+        "description": "Describes the HMM smoother applied to a result; the parameters are fitted and reported for transparency."
+      },
+      "VideoSource": {
+        "properties": {
+          "file_name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "File Name"
+          },
+          "content_type": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Content Type"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Size Bytes"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Duration Ms"
+          },
+          "fps": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fps"
+          },
+          "width": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Height"
+          },
+          "preview": {
+            "type": "null",
+            "title": "Preview"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "file_name",
+          "content_type",
+          "size_bytes",
+          "duration_ms",
+          "width",
+          "height"
+        ],
+        "title": "VideoSource"
+      },
+      "VideoTaskAcceptedResponse": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Task Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "task_id"
+        ],
+        "title": "VideoTaskAcceptedResponse"
+      },
+      "VideoTaskFailedResponse": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Task Id"
+          },
+          "stage": {
+            "type": "string",
+            "const": "STAGE_FAILED",
+            "title": "Stage",
+            "default": "STAGE_FAILED"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ImageApiError"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "task_id",
+          "error"
+        ],
+        "title": "VideoTaskFailedResponse"
+      },
+      "VideoTaskProcessingResponse": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Task Id"
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "STAGE_VIDEO_EXTRACTION",
+              "STAGE_VIDEO_INFERENCE",
+              "STAGE_VIDEO_FINALIZING"
+            ],
+            "title": "Stage"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "task_id",
+          "stage"
+        ],
+        "title": "VideoTaskProcessingResponse"
+      },
+      "VideoTaskPublicFailedResponse": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Task Id"
+          },
+          "stage": {
+            "type": "string",
+            "const": "STAGE_FAILED",
+            "title": "Stage",
+            "default": "STAGE_FAILED"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ImageApiError"
+          },
+          "frames_processed": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frames Processed"
+          },
+          "total_frames": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Frames"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "task_id",
+          "error"
+        ],
+        "title": "VideoTaskPublicFailedResponse"
+      },
+      "VideoTaskPublicProcessingResponse": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Task Id"
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "STAGE_VIDEO_EXTRACTION",
+              "STAGE_VIDEO_INFERENCE",
+              "STAGE_VIDEO_FINALIZING"
+            ],
+            "title": "Stage"
+          },
+          "frames_processed": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frames Processed"
+          },
+          "total_frames": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Frames"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "task_id",
+          "stage"
+        ],
+        "title": "VideoTaskPublicProcessingResponse"
+      },
+      "VideoTaskPublicSource": {
+        "properties": {
+          "file_name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "File Name"
+          },
+          "content_type": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Content Type"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Size Bytes"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Duration Ms"
+          },
+          "fps": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fps"
+          },
+          "width": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Height"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "file_name",
+          "content_type",
+          "size_bytes",
+          "duration_ms",
+          "width",
+          "height"
+        ],
+        "title": "VideoTaskPublicSource"
+      },
+      "VideoTaskPublicSucceededResponse": {
+        "properties": {
+          "prediction_short": {
+            "type": "string",
+            "enum": [
+              "no_ai",
+              "mixed",
+              "ai",
+              "unsure"
+            ],
+            "title": "Prediction Short"
+          },
+          "prediction": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Prediction"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "Low",
+                  "Medium",
+                  "High"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Task Id"
+          },
+          "stage": {
+            "type": "string",
+            "const": "STAGE_SUCCESS",
+            "title": "Stage",
+            "default": "STAGE_SUCCESS"
+          },
+          "schema_version": {
+            "type": "string",
+            "const": "1.1",
+            "title": "Schema Version",
+            "default": "1.1"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "source": {
+            "$ref": "#/components/schemas/VideoTaskPublicSource"
+          },
+          "detection_source": {
+            "$ref": "#/components/schemas/ImageDetectionSource"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "image-flash-1"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ImageApiMetadata"
+          },
+          "sampling": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Sampling"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "smoothing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VideoSmoothing"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ai_segment_gate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VideoAiSegmentGate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mixed_display": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VideoMixedDisplay"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "frames": {
+            "items": {
+              "$ref": "#/components/schemas/VideoFrame"
+            },
+            "type": "array",
+            "title": "Frames"
+          },
+          "segments": {
+            "items": {
+              "$ref": "#/components/schemas/VideoSegment"
+            },
+            "type": "array",
+            "title": "Segments"
+          },
+          "fraction_ai": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Fraction Ai"
+          },
+          "fraction_human": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Fraction Human"
+          },
+          "fraction_mixed": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Fraction Mixed"
+          },
+          "fraction_unsure": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Fraction Unsure",
+            "default": 0
+          },
+          "fraction_likely_ai": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Fraction Likely Ai",
+            "default": 0
+          },
+          "fraction_likely_human": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Fraction Likely Human",
+            "default": 0
+          },
+          "frames_processed": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Frames Processed"
+          },
+          "total_frames": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Frames"
+          },
+          "headline": {
+            "type": "string",
+            "enum": [
+              "No AI detected",
+              "AI Detected",
+              "Unsure"
+            ],
+            "title": "Headline"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prediction_short",
+          "prediction",
+          "task_id",
+          "created_at",
+          "source",
+          "detection_source",
+          "version",
+          "metadata",
+          "sampling",
+          "frames",
+          "segments",
+          "fraction_ai",
+          "fraction_human",
+          "fraction_mixed",
+          "frames_processed",
+          "total_frames",
+          "headline"
+        ],
+        "title": "VideoTaskPublicSucceededResponse",
+        "description": "Completed video analysis using response schema 1.1."
+      },
+      "VideoTaskSucceededResponse": {
+        "properties": {
+          "prediction_short": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "human",
+                  "mixed",
+                  "ai",
+                  "unsure"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "human",
+                  "mostly_human",
+                  "unsure",
+                  "partially_ai",
+                  "mostly_ai",
+                  "ai",
+                  "mixed"
+                ]
+              }
+            ],
+            "title": "Prediction Short"
+          },
+          "prediction": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Prediction"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "Low",
+                  "Medium",
+                  "High"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Task Id"
+          },
+          "stage": {
+            "type": "string",
+            "const": "STAGE_SUCCESS",
+            "title": "Stage",
+            "default": "STAGE_SUCCESS"
+          },
+          "schema_version": {
+            "type": "string",
+            "const": "1.0",
+            "title": "Schema Version",
+            "default": "1.0"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "source": {
+            "$ref": "#/components/schemas/VideoSource"
+          },
+          "detection_source": {
+            "$ref": "#/components/schemas/ImageDetectionSource"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "Pangram Image Flash 1.0"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ImageApiMetadata"
+          },
+          "sampling": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Sampling"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "smoothing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VideoSmoothing"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ai_segment_gate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VideoAiSegmentGate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mixed_display": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VideoMixedDisplay"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "frames": {
+            "items": {
+              "$ref": "#/components/schemas/VideoFrame"
+            },
+            "type": "array",
+            "title": "Frames"
+          },
+          "segments": {
+            "items": {
+              "$ref": "#/components/schemas/VideoSegment"
+            },
+            "type": "array",
+            "title": "Segments"
+          },
+          "fraction_ai": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Fraction Ai"
+          },
+          "fraction_human": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Fraction Human"
+          },
+          "fraction_mixed": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Fraction Mixed"
+          },
+          "fraction_unsure": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Fraction Unsure",
+            "default": 0
+          },
+          "fraction_likely_ai": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Fraction Likely Ai",
+            "default": 0
+          },
+          "fraction_likely_human": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Fraction Likely Human",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "prediction_short",
+          "prediction",
+          "task_id",
+          "created_at",
+          "source",
+          "detection_source",
+          "version",
+          "metadata",
+          "sampling",
+          "frames",
+          "segments",
+          "fraction_ai",
+          "fraction_human",
+          "fraction_mixed"
+        ],
+        "title": "VideoTaskSucceededResponse"
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key"
+      }
+    }
+  }
+}

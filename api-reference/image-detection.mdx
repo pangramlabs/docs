@@ -1,22 +1,24 @@
 ---
 title: "Image Detection"
-description: "Analyze images with Pangram Image 1.0 or Image Flash 1.0"
+description: "Detect AI-generated and AI-edited content in images"
 api: POST https://image.external-api.pangram.com/v1/tasks
 ---
 
-The Image API accepts one base64-encoded image and returns a task ID. Poll that task for its result. Image 1.0 and Image Flash 1.0 use the same endpoints and response fields.
+The Image API accepts one base64-encoded image and returns a task ID. Poll that task for its result. Use the `model` field to choose an image detection model.
 
 ## Choose a model
 
-| Model | Request `model` | Model result `version` |
+| Model series | Request `model` | Example result `version` |
 | --- | --- | --- |
-| Pangram Image 1.0 | `pangram-image-1` | `Pangram Image 1.0` |
-| Pangram Image Flash 1.0 | `pangram-image-flash-1` | `Pangram Image Flash 1.0` |
+| Pangram Image 1 | `pangram-image-1` | `Pangram Image 1.0` |
+| Pangram Image Flash 1 | `pangram-image-flash-1` | `Pangram Image Flash 1.0` |
 | Server default | `default`, or omit `model` | The model selected by the service |
 
-Pass the model explicitly when you want Image 1.0 or Flash. The current production default is Image 0.2; omitting `model` does not select Image 1.0. Availability can differ by environment, and an unavailable model returns `503`.
+Pass a model selector to choose a model series, or use `default` to follow the service default. The current default is Image 0.2.
 
-The model's `1.0` version is separate from the `/v1` API route and the Python package version. The text Models API and `Pangram.list_models()` describe text models; they do not list image models.
+`pangram-image-1` selects the Image 1 series. Minor versions within the series can change without changing the selector. The response's `version` field reports the model version used; it is `null` when validated provenance determines the result without model inference.
+
+Model versions are independent of the API route and Python package versions. The text Models API and `Pangram.list_models()` describe text models; they do not list image models.
 
 ## Base URL and authentication
 
@@ -27,8 +29,21 @@ https://image.external-api.pangram.com
 Send your API key in the `x-api-key` header on submission and polling. Read a task with the same key that created it.
 
 <Note>
-The current Python SDK has no image-specific methods. The Python examples on this page call the REST API with `requests`.
+Native image methods require Python SDK 1.1.0 or later. Choose the model explicitly with `predict_image()`; `list_models()` lists text models.
 </Note>
+
+## Python SDK
+
+```python
+from pangram import Pangram
+
+client = Pangram()  # Reads PANGRAM_API_KEY.
+result = client.predict_image("image.png", model="pangram-image-1")
+flash = client.predict_image("image.png", model="pangram-image-flash-1")
+print(result["prediction"], result["ai_likelihood"])
+```
+
+The SDK accepts a file path, raw bytes, or an open binary file and handles base64 encoding and polling. `model` is required; use a selector from the table above, or `default` to follow the service default. For separate submission and polling, use `submit_image()`, `get_image_status()`, and `wait_for_image()`. See the [SDK reference](/sdk/python).
 
 ## POST /v1/tasks
 
@@ -39,7 +54,7 @@ Submit one image as JSON.
 </ParamField>
 
 <ParamField body="model" type="string" default="default">
-  Use `pangram-image-1` for Image 1.0 or `pangram-image-flash-1` for Flash 1.0.
+  Image model selector from the table above. Use `default` to follow the service default.
 </ParamField>
 
 Unknown request fields are rejected. This endpoint accepts one image per task and does not expose a bulk-image operation.
@@ -59,7 +74,7 @@ base64 < image.png | tr -d '\n' \
       https://image.external-api.pangram.com/v1/tasks
 ```
 
-### Python
+### Python REST
 
 ```python
 import base64
@@ -179,7 +194,7 @@ else:
 | `metadata` | C2PA, software, and camera metadata when available. |
 | `thumbnail` | A nullable, metadata-stripped JPEG `data_url` with `width` and `height`. Its longest edge is at most 256 pixels; small images are not upscaled. |
 
-Image 1.0 and Flash return the same public verdict names. Provenance-only results can have `null` model scores, confidence, version, and heatmap. Clients should handle those nullable fields.
+Provenance-only results can have `null` model scores, confidence, version, and heatmap. Clients should handle those nullable fields.
 
 ## Failed tasks and request errors
 

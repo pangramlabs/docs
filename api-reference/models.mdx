@@ -51,6 +51,12 @@ available_models = client.list_models()
 
 Use one of the returned values as the request-wide `model` on [`POST /task`](/api-reference/ai-detection) or [`POST /bulk`](/api-reference/bulk-api). The `default` selector follows Pangram's current default model without pinning your integration to a numbered generation.
 
+## Model versions
+
+`pangram-4` selects the Pangram 4 series of text models. The minor version served within that series can change without changing the selector; for example, a request using `pangram-4` can return version `4.0` or `4.1`. Read the completed response's `version` field to identify the model version used.
+
+Image models follow the same convention: `pangram-image-1` selects the Image 1 series. See [Image Detection](/api-reference/image-detection) for image selectors and response fields.
+
 ## Errors
 
 | Status Code | Description |

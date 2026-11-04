@@ -1,0 +1,266 @@
+---
+title: "Video Detection"
+description: "Upload MP4, MOV, or WebM files to the Video API"
+openapi: openapi/video.json POST /v1/video/tasks
+---
+
+The Video API accepts a video file, analyzes sampled frames, and returns an asynchronous task ID.
+
+Use your API key with the production base URL:
+
+```text
+https://video.external-api.pangram.com
+```
+
+## Python SDK
+
+Python SDK 1.1.0 or later supports native video uploads:
+
+```python
+from pangram import Pangram
+
+client = Pangram()  # Reads PANGRAM_API_KEY.
+result = client.predict_video("clip.mp4")
+print(result["headline"], result["prediction_short"])
+```
+
+The SDK streams the file and polls until completion using the API's processing defaults. It accepts a path, raw bytes, or a seekable binary file; supply `filename="clip.mp4"` for bytes or an unnamed stream. For separate submission and progress polling, use `submit_video()`, `get_video_status()`, and `wait_for_video()`. See the [SDK reference](/sdk/python).
+
+## Submit a video file
+
+Send `multipart/form-data` to `POST /v1/video/tasks` with one `file` field. Send your API key in the `x-api-key` header.
+
+The `file` field is required and must contain one nonempty `.mp4`, `.mov`, or `.webm` file.
+
+Unknown or duplicate form fields are rejected.
+
+Do not set the multipart `Content-Type` header yourself: cURL or `requests` adds the required boundary.
+
+### cURL
+
+```bash
+export PANGRAM_VIDEO_API=https://video.external-api.pangram.com
+# Set PANGRAM_API_KEY to your API key.
+
+curl -sS "$PANGRAM_VIDEO_API/v1/video/tasks" \
+  -H "x-api-key: $PANGRAM_API_KEY" \
+  -F "file=@clip.mp4"
+```
+
+### Python REST
+
+This example calls the REST API directly:
+
+```python
+import os
+
+import requests
+
+base_url = "https://video.external-api.pangram.com"
+headers = {"x-api-key": os.environ["PANGRAM_API_KEY"]}
+
+with open("clip.mp4", "rb") as video:
+    response = requests.post(
+        f"{base_url}/v1/video/tasks",
+        headers=headers,
+        files={"file": ("clip.mp4", video, "video/mp4")},
+        timeout=(10, 300),
+    )
+response.raise_for_status()
+task_id = response.json()["task_id"]
+```
+
+Admission returns HTTP `202`:
+
+```json
+{
+  "task_id": "8db93921-df98-4edf-ae1d-8dd5839cd473"
+}
+```
+
+## Poll for the result
+
+Use the same key that submitted the task. Set `TASK_ID` to the returned `task_id` before running this cURL example:
+
+```bash
+curl -sS "$PANGRAM_VIDEO_API/v1/video/tasks/$TASK_ID" \
+  -H "x-api-key: $PANGRAM_API_KEY"
+```
+
+Processing stages are `STAGE_VIDEO_EXTRACTION`, `STAGE_VIDEO_INFERENCE`, and `STAGE_VIDEO_FINALIZING`. A task finishes at `STAGE_SUCCESS` or `STAGE_FAILED`.
+
+Continue from the Python submission example:
+
+```python
+import time
+
+deadline = time.monotonic() + 600
+while time.monotonic() < deadline:
+    response = requests.get(
+        f"{base_url}/v1/video/tasks/{task_id}",
+        headers=headers,
+        timeout=30,
+    )
+    response.raise_for_status()
+    result = response.json()
+    if result["stage"] == "STAGE_SUCCESS":
+        print(result["headline"], result["prediction_short"])
+        break
+    if result["stage"] == "STAGE_FAILED":
+        raise RuntimeError(result["error"])
+    time.sleep(1)
+else:
+    raise TimeoutError(f"Task {task_id} is still processing; continue polling it.")
+```
+
+During inference, `frames_processed` and `total_frames` appear when available. They count sampled frames, rather than elapsed video seconds, and can reset if processing retries.
+
+### Successful response
+
+This excerpt shows selected fields from a completed task, including one sampled frame and one timeline segment. Additional frame entries and their segment references are omitted, and the thumbnail's base64 content is abbreviated:
+
+```json
+{
+  "task_id": "8db93921-df98-4edf-ae1d-8dd5839cd473",
+  "stage": "STAGE_SUCCESS",
+  "schema_version": "1.1",
+  "headline": "No AI detected",
+  "prediction": "We believe the video is not AI-generated. We found no signs of AI content in the video frames.",
+  "prediction_short": "no_ai",
+  "version": "image-flash-1",
+  "source": {
+    "file_name": "clip.mp4",
+    "content_type": "video/mp4",
+    "size_bytes": 286001,
+    "duration_ms": 3042,
+    "fps": 24.0,
+    "width": 640,
+    "height": 360
+  },
+  "sampling": {
+    "fps": 3.0
+  },
+  "frames": [
+    {
+      "frame_id": "frame-000000",
+      "timestamp_ms": 0,
+      "result": {
+        "prediction": "Human",
+        "ai_likelihood": 0.02,
+        "confidence": "High",
+        "detection_source": "model",
+        "version": "Pangram Image Flash 1.0",
+        "heatmap": {
+          "grid": [[0.1, 0.2]],
+          "patch_stride": 16
+        },
+        "metadata": {
+          "software": [],
+          "camera": null
+        },
+        "thumbnail": {
+          "data_url": "data:image/jpeg;base64,<JPEG_BYTES>",
+          "width": 256,
+          "height": 144
+        }
+      }
+    }
+  ],
+  "segments": [
+    {
+      "id": "segment-000000",
+      "range": {
+        "start_ms": 0,
+        "end_ms": 3042
+      },
+      "prediction_short": "human",
+      "prediction": "Human",
+      "frame_ids": ["frame-000000"]
+    }
+  ],
+  "frames_processed": 10,
+  "total_frames": 10,
+  "fraction_ai": 0.0,
+  "fraction_human": 1.0,
+  "fraction_mixed": 0.0
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version` | Response format version, `1.1` by default. |
+| `headline` / `prediction` | Display headline and supporting sentence. |
+| `prediction_short` | One of `no_ai`, `mixed`, `ai`, or `unsure`. |
+| `source` | File information, inspected duration in milliseconds, dimensions, and native frame rate. The uploaded media is not returned. |
+| `version` | Frame model ID, `image-flash-1`, or `null` for a provenance-only result. This is separate from the response schema version. |
+| `sampling.fps` | Effective frame sampling rate. |
+| `frames` | Sampled frame IDs, timestamps in milliseconds, and per-frame image results. |
+| `segments` | Timeline segments with `range.start_ms`, `range.end_ms`, labels, and frame IDs. |
+| `fraction_*` | Duration shares for human, AI, mixed, unsure, likely-human, and likely-AI content. All applicable shares sum to one. |
+| `frames_processed` / `total_frames` | Frame counts; on success both equal the number of returned frames. |
+
+Segment labels can be `human`, `likely_human`, `unsure`, `likely_ai`, `ai`, or `mixed`. Frame-level image predictions retain their own labels, including `Human` and `AI Detected`; do not apply the top-level video enum to frame results.
+
+### Response versions
+
+Responses use version `1.1` by default. Existing integrations that require response version `1.0` can add `?response_version=1.0` to the polling URL:
+
+```bash
+curl -sS "$PANGRAM_VIDEO_API/v1/video/tasks/$TASK_ID?response_version=1.0" \
+  -H "x-api-key: $PANGRAM_API_KEY"
+```
+
+Response format versions are independent of model versions. Response version `1.0` uses `Pangram Image Flash 1.0` for the model version and retains its original source fields.
+
+## Limits and retention
+
+- One file per request, up to **500 MiB (524,288,000 bytes)**.
+- Frame analysis supports up to **two minutes for videos at 3 FPS or higher**. The API samples 3 frames per second, up to **360 sampled frames**. For lower-frame-rate videos, it samples at the source frame rate.
+- The API analyzes the uploaded file; it does not automatically trim long videos. Files exceeding processing limits fail.
+- Completed results are retained for **24 hours**. Polling an expired or unknown task returns `404`.
+
+## Billing
+
+The default video price is **USD 0.05 per second**, rounded up using the inspected source duration:
+
+| Source duration | Billable seconds | Default cost |
+| --- | --- | --- |
+| `3.042` seconds | `4` | `$0.20` |
+| `30` seconds | `30` | `$1.50` |
+| `60.001` seconds | `61` | `$3.05` |
+
+Only successful tasks are billed. Billing uses the full inspected source duration and your API account balance.
+
+## Failures and retries
+
+The polling endpoint returns a failed task with HTTP `200` and `stage: "STAGE_FAILED"`:
+
+```json
+{
+  "task_id": "8db93921-df98-4edf-ae1d-8dd5839cd473",
+  "stage": "STAGE_FAILED",
+  "error": {
+    "error": "video container could not be opened",
+    "error_code": "invalid_image",
+    "retryable": false
+  }
+}
+```
+
+Immediate request failures use the same nested `error` object without a task ID or stage.
+
+| HTTP status | Meaning |
+| --- | --- |
+| `400` | Malformed request headers or body. |
+| `401` | Missing or invalid API key. |
+| `402` | Insufficient API funds. |
+| `403` | The key does not own the requested task. |
+| `404` | Unknown or expired task. |
+| `413` | Upload exceeds the file or request size limit. |
+| `415` | Unsupported request Content-Type. Use `multipart/form-data`. |
+| `422` | Missing, empty, unsupported, or duplicate file/form fields. |
+| `429` | Account request rate exceeded. |
+| `500` | Unexpected service error. |
+| `503` | The video service is temporarily unavailable. |
+
+Submission does not accept an idempotency key. Each new POST creates another task and can incur another charge. Keep the accepted task ID and continue polling after a local timeout instead of uploading the same file again.

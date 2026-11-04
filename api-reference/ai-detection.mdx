@@ -16,6 +16,8 @@ Use the [Bulk API](/api-reference/bulk-api) when you need to analyze many texts 
 
 Use [`GET /models`](/api-reference/models) to discover the selectors available to your API key. The REST API temporarily accepts an omitted `model` for backward compatibility and resolves it to `"default"`. New integrations should always send a selector explicitly.
 
+`pangram-4` selects the Pangram 4 series. Minor versions within the series can change without changing the selector. The completed response's `version` field reports the model version used, such as `4.0` or `4.1`.
+
 ## POST /task
 
 Create an async AI detection task.
@@ -118,7 +120,7 @@ GET https://text.external-api.pangram.com/task/{task_id}
 </ResponseField>
 
 <ResponseField name="version" type="string">
-  The API version identifier (e.g., `"4.1"` for Pangram 4.1, `"4.0"` for Pangram 4). Present on success.
+  The model version used for this result (e.g., `"4.1"` or `"4.0"`). Minor versions can change within the selected model series. Present on success.
 </ResponseField>
 
 <ResponseField name="headline" type="string">
@@ -219,7 +221,7 @@ curl -X GET https://text.external-api.pangram.com/task/123e4567-e89b-12d3-a456-4
 
 **Success Response**
 
-This example shows a Pangram 4 result. Pangram 4 returns `version: "4.0"`, uses `"AI-Assisted"` instead of lightly or moderately assisted window labels, and keeps `confidence` as `"Low"`, `"Medium"`, or `"High"`.
+This example shows a version `4.0` result from the Pangram 4 series. It uses `"AI-Assisted"` instead of lightly or moderately assisted window labels and keeps `confidence` as `"Low"`, `"Medium"`, or `"High"`.
 
 ```json
 {
