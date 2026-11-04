@@ -21,7 +21,9 @@ Send `multipart/form-data` to `POST /v1/video/tasks` with one `file` field. Send
 | `file` | File, required | — | One nonempty `.mp4`, `.mov`, or `.webm` file. |
 | `sampling_fps` | Number | `3` | Range `0.1`–`24`; capped by the source video's native frame rate. |
 | `hmm_smoothing` | Boolean | `false` | Smooth isolated changes in the frame timeline where the option is enabled. |
-| `detailed_labels` | Boolean | `false` | Include likely-human and likely-AI segment labels where the option is enabled. |
+| `detailed_labels` | Boolean | `false` | Include likely-human and likely-AI segment labels and their duration fractions. |
+
+With `detailed_labels=true`, the default `1.1` response still uses `no_ai`, `mixed`, `ai`, or `unsure` for the overall `prediction_short`. Graded overall verdicts are available only in the legacy `1.0` presentation.
 
 Production enables these processing options. An option that has not been enabled in an environment returns `503`. Unknown or duplicate form fields are rejected.
 
@@ -128,7 +130,7 @@ This excerpt shows selected fields from a completed task; frame and segment arra
   "headline": "No AI detected",
   "prediction": "We believe the video is not AI-generated. We found no signs of AI content in the video frames.",
   "prediction_short": "no_ai",
-  "version": "Pangram Image Flash 1.0",
+  "version": "image-flash-1",
   "source": {
     "file_name": "clip.mp4",
     "content_type": "video/mp4",
@@ -136,8 +138,7 @@ This excerpt shows selected fields from a completed task; frame and segment arra
     "duration_ms": 3042,
     "fps": 24.0,
     "width": 640,
-    "height": 360,
-    "preview": null
+    "height": 360
   },
   "sampling": {
     "fps": 3.0
@@ -156,7 +157,7 @@ This excerpt shows selected fields from a completed task; frame and segment arra
 | `headline` / `prediction` | Display headline and supporting sentence. |
 | `prediction_short` | One of `no_ai`, `mixed`, `ai`, or `unsure`. |
 | `source` | File information, inspected duration in milliseconds, dimensions, and native frame rate. The uploaded media is not returned. |
-| `version` | Frame model version, such as `Pangram Image Flash 1.0`. This is separate from the response schema version. |
+| `version` | Frame model ID, `image-flash-1`, or `null` for a provenance-only result. This is separate from the response schema version. |
 | `sampling.fps` | Effective frame sampling rate. |
 | `frames` | Sampled frame IDs, timestamps in milliseconds, and per-frame image results. |
 | `segments` | Timeline segments with `range.start_ms`, `range.end_ms`, labels, and frame IDs. |
@@ -174,7 +175,7 @@ curl -sS "$PANGRAM_VIDEO_API/v1/video/tasks/$TASK_ID?response_version=1.0" \
   -H "x-api-key: $PANGRAM_API_KEY"
 ```
 
-The `/v1` route, `schema_version`, and `Pangram Image Flash 1.0` model version describe different things.
+The `/v1` route, `schema_version`, and `image-flash-1` model ID describe different things. The legacy `1.0` response retains the older `Pangram Image Flash 1.0` display value and source fields.
 
 ## Limits and retention
 

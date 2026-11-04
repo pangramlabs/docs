@@ -133,6 +133,16 @@
               }
             },
             "description": "Service Unavailable"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageTaskRequestErrorResponse"
+                }
+              }
+            },
+            "description": "Unsupported Media Type"
           }
         },
         "requestBody": {
@@ -158,7 +168,7 @@
                   },
                   "detailed_labels": {
                     "default": false,
-                    "description": "Optional five-level frame and segment labels (human, likely_human, unsure, likely_ai, ai; heatmap mixed frames stay mixed) and a graded overall verdict (human, mostly_human, unsure, partially_ai, mostly_ai, ai).",
+                    "description": "Include likely_human and likely_ai segment labels and their duration fractions. The default 1.1 response keeps the overall prediction_short as no_ai, mixed, ai, or unsure. The legacy 1.0 response reports a graded overall verdict.",
                     "title": "Detailed Labels",
                     "type": "boolean"
                   },
@@ -375,13 +385,6 @@
     }
   },
   "components": {
-    "securitySchemes": {
-      "ApiKeyAuth": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "x-api-key"
-      }
-    },
     "schemas": {
       "ImageApiC2pa": {
         "properties": {
@@ -1472,6 +1475,63 @@
         ],
         "title": "VideoTaskPublicProcessingResponse"
       },
+      "VideoTaskPublicSource": {
+        "properties": {
+          "file_name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "File Name"
+          },
+          "content_type": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Content Type"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Size Bytes"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Duration Ms"
+          },
+          "fps": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fps"
+          },
+          "width": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Height"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "file_name",
+          "content_type",
+          "size_bytes",
+          "duration_ms",
+          "width",
+          "height"
+        ],
+        "title": "VideoTaskPublicSource"
+      },
       "VideoTaskPublicSucceededResponse": {
         "properties": {
           "prediction_short": {
@@ -1528,7 +1588,7 @@
             "title": "Created At"
           },
           "source": {
-            "$ref": "#/components/schemas/VideoSource"
+            "$ref": "#/components/schemas/VideoTaskPublicSource"
           },
           "detection_source": {
             "$ref": "#/components/schemas/ImageDetectionSource"
@@ -1537,7 +1597,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "const": "Pangram Image Flash 1.0"
+                "const": "image-flash-1"
               },
               {
                 "type": "null"
@@ -1900,6 +1960,13 @@
           "fraction_mixed"
         ],
         "title": "VideoTaskSucceededResponse"
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key"
       }
     }
   }
