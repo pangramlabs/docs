@@ -8,13 +8,15 @@ The Image API accepts one base64-encoded image and returns a task ID. Poll that 
 
 ## Choose a model
 
-| Model | Request `model` | Model result `version` |
+| Model series | Request `model` | Example result `version` |
 | --- | --- | --- |
-| Pangram Image 1.0 | `pangram-image-1` | `Pangram Image 1.0` |
-| Pangram Image Flash 1.0 | `pangram-image-flash-1` | `Pangram Image Flash 1.0` |
+| Pangram Image 1 | `pangram-image-1` | `Pangram Image 1.0` |
+| Pangram Image Flash 1 | `pangram-image-flash-1` | `Pangram Image Flash 1.0` |
 | Server default | `default`, or omit `model` | The model selected by the service |
 
-Pass a model selector to choose a specific model, or use `default` to follow the service default. The current default is Image 0.2.
+Pass a model selector to choose a model series, or use `default` to follow the service default. The current default is Image 0.2.
+
+`pangram-image-1` selects the Image 1 series. Minor versions within the series can change without changing the selector. The response's `version` field reports the model version used; it is `null` when validated provenance determines the result without model inference.
 
 Model versions are independent of the API route and Python package versions. The text Models API and `Pangram.list_models()` describe text models; they do not list image models.
 

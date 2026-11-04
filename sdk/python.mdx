@@ -33,6 +33,10 @@ client = Pangram(api_key="your-api-key")
 
 Raises `ValueError` if the API key is not provided and not set in the environment.
 
+<Note>
+`pangram-4` selects the Pangram 4 text series, and `pangram-image-1` selects the Image 1 series. Minor versions can change within the selected series without changing the selector. Read the result's `version` field to identify the model version used; image results determined solely by validated provenance have `version=None`.
+</Note>
+
 ---
 
 ### predict_image()
@@ -459,7 +463,7 @@ A dictionary with the following fields after the task reaches `STAGE_SUCCESS`:
 </ResponseField>
 
 <ResponseField name="version" type="string">
-  The API version identifier (e.g., `"4.1"` for Pangram 4.1, `"4.0"` for Pangram 4).
+  The model version used for this result (e.g., `"4.1"` or `"4.0"`). Minor versions can change within the selected model series.
 </ResponseField>
 
 <ResponseField name="headline" type="string">
