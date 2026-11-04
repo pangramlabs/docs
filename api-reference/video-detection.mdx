@@ -215,8 +215,7 @@ Response format versions are independent of model versions. Response version `1.
 ## Limits and retention
 
 - One file per request, up to **500 MiB (524,288,000 bytes)**.
-- At most **360 sampled frames**. Standard processing samples up to 3 frames per second, giving approximately two minutes of video.
-- The source-duration ceiling is **10 minutes**. Both the sampled-frame limit and the source-duration limit apply.
+- Frame analysis supports up to **two minutes for videos at 3 FPS or higher**. The API samples 3 frames per second, up to **360 sampled frames**. For lower-frame-rate videos, it samples at the source frame rate.
 - The API analyzes the uploaded file; it does not automatically trim long videos. Files exceeding processing limits fail.
 - Completed results are retained for **24 hours**. Polling an expired or unknown task returns `404`.
 
