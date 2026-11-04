@@ -1,0 +1,219 @@
+---
+title: "Image Detection"
+description: "Analyze images with Pangram Image 1.0 or Image Flash 1.0"
+api: POST https://image.external-api.pangram.com/v1/tasks
+---
+
+The Image API accepts one base64-encoded image and returns a task ID. Poll that task for its result. Image 1.0 and Image Flash 1.0 use the same endpoints and response fields.
+
+## Choose a model
+
+| Model | Request `model` | Model result `version` |
+| --- | --- | --- |
+| Pangram Image 1.0 | `pangram-image-1` | `Pangram Image 1.0` |
+| Pangram Image Flash 1.0 | `pangram-image-flash-1` | `Pangram Image Flash 1.0` |
+| Server default | `default`, or omit `model` | The model selected by the service |
+
+Pass the model explicitly when you want Image 1.0 or Flash. The current production default is Image 0.2; omitting `model` does not select Image 1.0. Availability can differ by environment, and an unavailable model returns `503`.
+
+The model's `1.0` version is separate from the `/v1` API route and the Python package version. The text Models API and `Pangram.list_models()` describe text models; they do not list image models.
+
+## Base URL and authentication
+
+```text
+https://image.external-api.pangram.com
+```
+
+Send your API key in the `x-api-key` header on submission and polling. Read a task with the same key that created it.
+
+<Note>
+The current Python SDK has no image-specific methods. The Python examples on this page call the REST API with `requests`.
+</Note>
+
+## POST /v1/tasks
+
+Submit one image as JSON.
+
+<ParamField body="image_b64" type="string" required>
+  Base64-encoded image bytes, either plain base64 or a base64 data URL. The decoded image can be at most 32 MiB, and the complete JSON request body can be at most 128 MiB.
+</ParamField>
+
+<ParamField body="model" type="string" default="default">
+  Use `pangram-image-1` for Image 1.0 or `pangram-image-flash-1` for Flash 1.0.
+</ParamField>
+
+Unknown request fields are rejected. This endpoint accepts one image per task and does not expose a bulk-image operation.
+
+### cURL
+
+```bash
+export PANGRAM_IMAGE_MODEL=pangram-image-1
+# For Flash, use: export PANGRAM_IMAGE_MODEL=pangram-image-flash-1
+
+base64 < image.png | tr -d '\n' \
+  | jq -Rs --arg model "$PANGRAM_IMAGE_MODEL" '{image_b64: ., model: $model}' \
+  | curl -sS \
+      -H 'content-type: application/json' \
+      -H "x-api-key: $PANGRAM_API_KEY" \
+      --data-binary @- \
+      https://image.external-api.pangram.com/v1/tasks
+```
+
+### Python
+
+```python
+import base64
+import os
+from pathlib import Path
+
+import requests
+
+base_url = "https://image.external-api.pangram.com"
+headers = {"x-api-key": os.environ["PANGRAM_API_KEY"]}
+model = "pangram-image-1"  # Or "pangram-image-flash-1".
+
+response = requests.post(
+    f"{base_url}/v1/tasks",
+    headers=headers,
+    json={
+        "image_b64": base64.b64encode(Path("image.png").read_bytes()).decode("ascii"),
+        "model": model,
+    },
+    timeout=60,
+)
+response.raise_for_status()
+task_id = response.json()["task_id"]
+```
+
+Successful admission returns `202 Accepted`:
+
+```json
+{
+  "task_id": "8db93921-df98-4edf-ae1d-8dd5839cd473"
+}
+```
+
+## GET /v1/tasks/{task_id}
+
+```bash
+curl -sS \
+  -H "x-api-key: $PANGRAM_API_KEY" \
+  https://image.external-api.pangram.com/v1/tasks/8db93921-df98-4edf-ae1d-8dd5839cd473
+```
+
+An in-progress response contains the task ID and its current stage:
+
+```json
+{
+  "task_id": "8db93921-df98-4edf-ae1d-8dd5839cd473",
+  "stage": "STAGE_IMAGE_INFERENCE"
+}
+```
+
+Processing stages are `STAGE_IMAGE_INFERENCE` and `STAGE_IMAGE_FINALIZING`. Terminal stages are `STAGE_SUCCESS` and `STAGE_FAILED`.
+
+### Poll with Python
+
+Continue from the submission example:
+
+```python
+import time
+
+deadline = time.monotonic() + 300
+while time.monotonic() < deadline:
+    response = requests.get(
+        f"{base_url}/v1/tasks/{task_id}",
+        headers=headers,
+        timeout=30,
+    )
+    response.raise_for_status()
+    result = response.json()
+    if result["stage"] == "STAGE_SUCCESS":
+        print(result["prediction"], result["version"])
+        break
+    if result["stage"] == "STAGE_FAILED":
+        raise RuntimeError(result["error"])
+    time.sleep(0.5)
+else:
+    raise TimeoutError(f"Task {task_id} is still processing; continue polling it.")
+```
+
+### Success response
+
+```json
+{
+  "task_id": "8db93921-df98-4edf-ae1d-8dd5839cd473",
+  "stage": "STAGE_SUCCESS",
+  "prediction": "No AI",
+  "ai_likelihood": 0.02,
+  "confidence": "High",
+  "detection_source": "model",
+  "version": "Pangram Image 1.0",
+  "heatmap": {
+    "grid": [[0.1, 0.2]],
+    "patch_stride": 16
+  },
+  "metadata": {
+    "c2pa": {
+      "present": false,
+      "validation_state": null,
+      "claim_generator_info": null,
+      "issuer": null,
+      "actions": []
+    },
+    "software": [],
+    "camera": null
+  },
+  "thumbnail": null
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `prediction` | One of `AI Detected`, `Likely AI`, `Unsure`, `Likely No AI`, `No AI`, or `Partially AI`. |
+| `ai_likelihood` | Model score from 0 to 1; nullable for a provenance-based result. |
+| `confidence` | `Low`, `Medium`, or `High`; nullable for a provenance-based result. |
+| `detection_source` | `model` for model inference or `c2pa` when validated AI provenance determines the result. |
+| `version` | The image model's display version, or `null` for a C2PA result. |
+| `heatmap` | Nullable patch scores in `grid` and their input-pixel spacing in `patch_stride`. |
+| `metadata` | C2PA, software, and camera metadata when available. |
+| `thumbnail` | A nullable, metadata-stripped JPEG `data_url` with `width` and `height`. Its longest edge is at most 256 pixels; small images are not upscaled. |
+
+Image 1.0 and Flash return the same public verdict names. Provenance-only results can have `null` model scores, confidence, version, and heatmap. Clients should handle those nullable fields.
+
+## Failed tasks and request errors
+
+A failed task is returned by the polling endpoint with HTTP `200` and `stage: "STAGE_FAILED"`. Check the stage as well as the HTTP status.
+
+```json
+{
+  "task_id": "8db93921-df98-4edf-ae1d-8dd5839cd473",
+  "stage": "STAGE_FAILED",
+  "error": {
+    "error": "The image could not be decoded.",
+    "error_code": "invalid_image",
+    "retryable": false
+  }
+}
+```
+
+Immediate request errors return the same nested `error` object without a task ID or stage. An accepted image that cannot be decoded can fail asynchronously.
+
+| HTTP status | Meaning |
+| --- | --- |
+| `400` | Invalid JSON, base64, or unknown image model selector. |
+| `401` | Missing or invalid API key. |
+| `402` | Insufficient API credits. |
+| `403` | The API key does not own the task. |
+| `404` | Task not found or no longer retained. |
+| `413` | The request or decoded image exceeds its size limit. |
+| `422` | Missing required fields or an invalid request schema. |
+| `429` | Account request rate exceeded. |
+| `500` | Unexpected service error. |
+| `503` | The selected model or image service is unavailable. |
+
+## Billing and retries
+
+A successful task bills one image at your account's image API rate. Failed tasks are not billed. See the [pricing page](https://www.pangram.com/pricing) for current rates.
+
+Keep the accepted `task_id` and continue polling it after a client-side timeout. Image submission does not accept an idempotency key: submitting the image again creates another task and can incur another charge.
