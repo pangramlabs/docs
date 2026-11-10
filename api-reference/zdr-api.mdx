@@ -37,6 +37,16 @@ curl --request POST \
   --data '{"text": "The text to analyze", "model": "pangram-4"}'
 ```
 
+```python Python SDK (1.2.0)
+from pangram import Pangram
+
+client = Pangram()  # Reads PANGRAM_API_KEY.
+result = client.predict_zdr(
+    "The text to analyze", model="pangram-4", timeout=610,
+)
+print(result["prediction_short"])
+```
+
 ```python Python (requests)
 import os
 import requests
@@ -46,6 +56,7 @@ response = requests.post(
     headers={"x-api-key": os.environ["PANGRAM_API_KEY"]},
     json={"text": "The text to analyze", "model": "pangram-4"},
     timeout=(10, 610),
+    allow_redirects=False,
 )
 response.raise_for_status()
 result = response.json()
@@ -56,7 +67,11 @@ print(result["prediction_short"])
 
 </CodeGroup>
 
-The Python SDK currently has no native ZDR prediction helper. `Pangram.predict()` uses the standard async API; it does not enable ZDR. The Python example above can be used alongside the SDK.
+<Note>
+`predict_zdr()` is introduced in SDK 1.2.0, which is not yet released. The `requests` example works with older SDK versions. `Pangram.predict()` continues to use the standard async API.
+</Note>
+
+The SDK sends one POST without redirects, polling, automatic retries, or fallback. It returns `PredictionResult` on success, raises `TimeoutError` on a client timeout, and raises `PangramRequestError` on HTTP, transport, malformed-response, or terminal analysis failures. Its error messages omit response bodies and submitted content.
 
 ## Response and timeouts
 

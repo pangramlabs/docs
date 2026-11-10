@@ -17,6 +17,15 @@ curl https://text.external-api.pangram.com/balance \
   --header "x-api-key: $PANGRAM_API_KEY"
 ```
 
+```python Python SDK (1.2.0)
+from decimal import Decimal
+from pangram import Pangram
+
+client = Pangram()  # Reads PANGRAM_API_KEY.
+balance = client.get_balance()
+available_usd = Decimal(balance["available_balance_usd"])
+```
+
 ```python Python (requests)
 import os
 from decimal import Decimal
@@ -34,7 +43,9 @@ available_usd = Decimal(balance["available_balance_usd"])
 
 </CodeGroup>
 
-The Python SDK currently has no native balance helper. Use this HTTP example alongside the SDK.
+<Note>
+`get_balance(*, timeout=10)` is introduced in SDK 1.2.0, which is not yet released. It returns an `AccountBalance` dictionary. The `requests` example works with older SDK versions. See [SDK error handling](/sdk/python#account-read-errors).
+</Note>
 
 ## Response
 

@@ -25,6 +25,13 @@ curl 'https://text.external-api.pangram.com/usage?month=2026-10' \
   --header "x-api-key: $PANGRAM_API_KEY"
 ```
 
+```python Python SDK (1.2.0)
+from pangram import Pangram
+
+client = Pangram()  # Reads PANGRAM_API_KEY.
+usage = client.get_usage(month="2026-10")  # Omit month for the current UTC month.
+```
+
 ```python Python (requests)
 import os
 import requests
@@ -41,7 +48,9 @@ usage = response.json()
 
 </CodeGroup>
 
-The Python SDK currently has no native usage helper. Use this HTTP example alongside the SDK.
+<Note>
+`get_usage(month=None, *, timeout=10)` is introduced in SDK 1.2.0, which is not yet released. It returns an `AccountUsage` dictionary. The `requests` example works with older SDK versions. See [SDK error handling](/sdk/python#account-read-errors).
+</Note>
 
 ## Response
 
