@@ -35,9 +35,7 @@ The [Video API](/api-reference/video-detection) accepts direct video uploads at 
 
 ## Authentication
 
-[ZDR text analysis](/api-reference/zdr-api) uses `POST https://text-zdr.external-api.pangram.com/` and returns a terminal result directly. The standard async task and bulk flows below do not apply to that endpoint.
-
-The read-only [balance](/api-reference/balance), [usage](/api-reference/usage), and [limits](/api-reference/limits) APIs use the standard text hostname, including for strict-ZDR keys. They do not spend credits or consume inference QPS.
+The read-only [balance](/api-reference/balance), [usage](/api-reference/usage), and [limits](/api-reference/limits) APIs use the standard text hostname. They do not spend credits or consume inference QPS.
 
 All API requests must include your API key in the `x-api-key` header.
 
@@ -94,8 +92,6 @@ All API requests must include your API key in the `x-api-key` header.
 
 ## Model Discovery
 
-Strict-ZDR keys cannot use the standard model catalog. Follow the [ZDR guide](/api-reference/zdr-api) and obtain an approved selector from support instead.
-
 Call [`GET /models`](/api-reference/models) to retrieve the ordered model selectors available to your API key. The catalog is entitlement- and availability-aware; do not hard-code it or assume every account sees the same values.
 
 Pass one returned selector as `model` when creating a text or bulk job. One selector applies to the entire request. New integrations should always send it explicitly.
@@ -123,7 +119,7 @@ Submit documents as `multipart/form-data` to `https://file-external.api.pangram.
 | `400 Bad Request` | The request body is not properly formatted. |
 | `401 Unauthorized` | The `x-api-key` is missing or invalid. |
 | `402 Payment Required` | The account has insufficient credits. |
-| `403 Forbidden` | Model access is denied, the key does not own the task/bulk job, or a strict-ZDR key is using a standard inference/model-catalog route. |
+| `403 Forbidden` | The requested model is not enabled for the API key, or the API key does not own the requested task or bulk job. |
 | `404 Not Found` | The requested task or bulk job does not exist. |
 | `413 Payload Too Large` | The bulk request exceeds the maximum billable units. |
 | `422 Unprocessable Entity` | The input text or model selector is invalid. |

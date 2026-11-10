@@ -6,7 +6,7 @@ api: GET https://text.external-api.pangram.com/usage
 
 Return recorded external billable usage for the **calling API key**, across products, for one UTC calendar month. Other keys on the same billing account have separate histories. Replacing a key does not transfer the old key's usage history.
 
-This read works with strict-ZDR keys and zero or negative balances. It does not spend credits or consume inference QPS. Responses use `Cache-Control: no-store`.
+This read works with zero or negative balances. It does not spend credits or consume inference QPS. Responses use `Cache-Control: no-store`.
 
 ## Query parameter
 

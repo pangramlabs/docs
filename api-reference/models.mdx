@@ -10,10 +10,6 @@ Use the Models API to discover the model selectors your API key can currently us
 
 ## GET /models
 
-<Warning>
-Strict-ZDR keys receive `403 Forbidden` from this route and SDK `list_models()`. Use a model selector approved for the account, or contact [support@pangram.com](mailto:support@pangram.com). See the [ZDR guide](/api-reference/zdr-api).
-</Warning>
-
 ```
 GET https://text.external-api.pangram.com/models
 ```
@@ -66,5 +62,4 @@ Image models follow the same convention: `pangram-image-1` selects the Image 1 s
 | Status Code | Description |
 |---|---|
 | `401 Unauthorized` | The `x-api-key` is missing or invalid. |
-| `403 Forbidden` | A strict-ZDR account cannot use the standard model catalog. |
 | `500 Internal Server Error` | The model catalog could not be retrieved. |

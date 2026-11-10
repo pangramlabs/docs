@@ -39,38 +39,17 @@ Raises `ValueError` if the API key is not provided and not set in the environmen
 
 ---
 
-## ZDR and account APIs
+## Account APIs
 
 <Note>
-These four methods are introduced in SDK 1.2.0, which is not yet released. Until that release, use the direct `requests` examples in the linked API guides.
+These three methods are introduced in SDK 1.2.0, which is not yet released. Until that release, use the direct `requests` examples in the linked API guides.
 </Note>
 
 | Method | Guide | Behavior |
 | --- | --- | --- |
-| `predict_zdr(text, *, model, timeout=610)` | [Zero Data Retention](/api-reference/zdr-api) | One synchronous response with one-time result delivery. |
 | `get_balance(*, timeout=10)` | [Credit Balance](/api-reference/balance) | Account credit balances as USD decimal strings. |
 | `get_usage(month=None, *, timeout=10)` | [Monthly Usage](/api-reference/usage) | Calling key's recorded request count and cost for one UTC month. |
 | `get_limits(*, timeout=10)` | [QPS Limit](/api-reference/limits) | Account inference `qps_limit`, including fractional values or `None`. |
-
-<Warning>
-For ZDR, use the dedicated endpoint and a model approved for the account. Do not automatically retry a request or fall back to `predict()` after a timeout: the result may be unrecoverable and a retry may incur another charge. Strict-ZDR keys cannot use `list_models()` or standard text/image inference routes; account reads remain available.
-</Warning>
-
-### predict_zdr()
-
-```python
-from pangram import Pangram
-
-client = Pangram()  # Reads PANGRAM_API_KEY.
-result = client.predict_zdr("The text to analyze", model="pangram-4", timeout=610)
-print(result["prediction_short"])
-```
-
-`text` must be non-empty. `model` is required and keyword-only; use a selector enabled for the account. The method sends one POST to `https://text-zdr.external-api.pangram.com/` without redirects, polling, automatic retries, or fallback. It returns a `PredictionResult` dictionary after a successful terminal analysis.
-
-`timeout` must be positive and finite. It defaults to 610 seconds of read inactivity, with connection establishment capped at 10 seconds or your timeout if smaller. It is not a total wall-clock deadline.
-
-Client timeouts raise `TimeoutError`. HTTP, transport, malformed-response, and terminal analysis failures raise `PangramRequestError`. Error messages omit response bodies and submitted content. HTTP failures expose `status_code` and a numeric `retry_after` delay; these do not make a retry idempotent. The SDK does not offer dashboard links, bulk submission, webhooks, or end-user email options through this method.
 
 ### Account read methods
 
@@ -87,7 +66,7 @@ limits = client.get_limits()
 
 Account reads spend no credits and consume no inference QPS, but share their own read limits. Honor `Retry-After` on HTTP `429`. `/balance` reports available credits; `/usage` reports recorded consumption.
 
-The return types are `AccountBalance`, `AccountUsage`, and `AccountLimits`, all ordinary dictionaries. USD amounts remain decimal strings, including negative balances. Usage covers only the calling key, across products, for the selected UTC month. Limits preserve fractional QPS and `None` when no account QPS limit is configured. All three methods work with strict-ZDR keys.
+The return types are `AccountBalance`, `AccountUsage`, and `AccountLimits`, all ordinary dictionaries. USD amounts remain decimal strings, including negative balances. Usage covers only the calling key, across products, for the selected UTC month. Limits preserve fractional QPS and `None` when no account QPS limit is configured.
 
 Each method accepts a positive finite keyword-only `timeout`, defaulting to 10 seconds. `get_usage()` accepts a calendar month in `YYYY-MM` form, or `None` for the current UTC month. Future months are rejected by the server.
 
@@ -95,7 +74,7 @@ Each method accepts a positive finite keyword-only `timeout`, defaulting to 10 s
 
 Invalid local input raises `ValueError`. HTTP, transport, and malformed-response failures raise `PangramRequestError`, a `ValueError` subclass exported from `pangram`. The exception exposes `status_code` and `retry_after` in seconds, preserving numeric `Retry-After` headers. If no HTTP error is available, `status_code` may be `None`.
 
-Account reads make one request, disable redirects, and do not automatically retry. On HTTP `429`, wait for `retry_after` before making another read. Handle read retries separately from ZDR predictions, where another submission may incur another charge.
+Account reads make one request, disable redirects, and do not automatically retry. On HTTP `429`, wait for `retry_after` before making another read.
 
 ## Native SDK methods
 
