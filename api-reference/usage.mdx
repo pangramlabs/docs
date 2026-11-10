@@ -14,7 +14,7 @@ This read works with zero or negative balances. It does not spend credits or con
   One UTC calendar month in `YYYY-MM` form, such as `2026-10`. Defaults to the current UTC month and includes transactions committed so far. Future months are rejected.
 </ParamField>
 
-`month` is the only supported query parameter. Account/key selectors, date ranges, daily breakdowns, and product filters are not supported. Use the dashboard for account-wide history.
+Use `month` to select a UTC calendar month. Use the dashboard for account-wide history.
 
 ## Examples
 
@@ -49,7 +49,7 @@ usage = response.json()
 </CodeGroup>
 
 <Note>
-`get_usage(month=None, *, timeout=10)` is introduced in SDK 1.2.0, which is not yet released. It returns an `AccountUsage` dictionary. The `requests` example works with older SDK versions. See [SDK error handling](/sdk/python#account-read-errors).
+`get_usage(month=None, *, timeout=10)` requires SDK 1.2.0 or later and returns an `AccountUsage` dictionary. See [SDK error handling](/sdk/python#account-read-errors).
 </Note>
 
 ## Response
@@ -67,14 +67,14 @@ usage = response.json()
 </ResponseField>
 
 <ResponseField name="total_requests" type="integer">
-  Count of recorded external billable rows, not all HTTP attempts or bulk parent submissions.
+  Count of recorded billable requests across products.
 </ResponseField>
 
 <ResponseField name="total_cost_usd" type="string">
-  USD decimal string summing recorded charges. Missing or zero historical charges are not recalculated at today's prices.
+  USD decimal string summing the recorded charges for those requests.
 </ResponseField>
 
-An unused month returns zero requests and `"0.000000"` cost. These values represent credit consumption, not purchases, invoices, or remaining credits. Use [`/balance`](/api-reference/balance) for the available credit balance and decimal arithmetic for USD amounts.
+An unused month returns zero requests and `"0.000000"` cost. These values represent recorded credit consumption. Use [`/balance`](/api-reference/balance) for the available credit balance and decimal arithmetic for USD amounts.
 
 ## Read limits and errors
 

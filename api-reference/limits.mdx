@@ -40,7 +40,7 @@ limits = response.json()
 </CodeGroup>
 
 <Note>
-`get_limits(*, timeout=10)` is introduced in SDK 1.2.0, which is not yet released. It returns an `AccountLimits` dictionary, preserving fractional QPS and `None`. The `requests` example works with older SDK versions. See [SDK error handling](/sdk/python#account-read-errors).
+`get_limits(*, timeout=10)` requires SDK 1.2.0 or later and returns an `AccountLimits` dictionary, preserving fractional QPS and `None`. See [SDK error handling](/sdk/python#account-read-errors).
 </Note>
 
 ## Response
@@ -53,7 +53,7 @@ limits = response.json()
   Configured inference QPS limit. Fractional values are preserved. `null` means no account QPS limit is configured; other service capacity and protection limits still apply.
 </ResponseField>
 
-This is not a live remaining-request counter or a guarantee of available capacity. Bulk limits and concurrency limits are not returned.
+This value describes the account's configured inference rate.
 
 ## Read limits and errors
 

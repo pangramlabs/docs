@@ -44,7 +44,7 @@ available_usd = Decimal(balance["available_balance_usd"])
 </CodeGroup>
 
 <Note>
-`get_balance(*, timeout=10)` is introduced in SDK 1.2.0, which is not yet released. It returns an `AccountBalance` dictionary. The `requests` example works with older SDK versions. See [SDK error handling](/sdk/python#account-read-errors).
+`get_balance(*, timeout=10)` requires SDK 1.2.0 or later and returns an `AccountBalance` dictionary. See [SDK error handling](/sdk/python#account-read-errors).
 </Note>
 
 ## Response
@@ -69,11 +69,11 @@ available_usd = Decimal(balance["available_balance_usd"])
   Sum of the purchased and subscription-included balances. Balances may be negative.
 </ResponseField>
 
-Use decimal arithmetic for these amounts. This is not a reservation for pending requests, an invoice amount, or a universal number of remaining scans. [`/usage`](/api-reference/usage) reports consumption rather than remaining credits.
+Use decimal arithmetic for these amounts. They reflect committed credits at the time of the request. [`/usage`](/api-reference/usage) reports consumption rather than remaining credits.
 
 ## Read limits and errors
 
-Balance, usage, and limits calls share a separate account-read budget. Current safeguards allow 60 reads per key per minute, 300 reads across all keys per minute, and two concurrent reads **per gateway process**. These are process-local protective limits, not a distributed account-wide quota or guaranteed allowance. Avoid continuous polling and respect `Retry-After` on `429`.
+Account reads have rate limits separate from inference. Avoid continuous polling and respect `Retry-After` on HTTP `429`.
 
 | Status | Meaning |
 | --- | --- |

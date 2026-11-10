@@ -42,7 +42,7 @@ Raises `ValueError` if the API key is not provided and not set in the environmen
 ## Account APIs
 
 <Note>
-These three methods are introduced in SDK 1.2.0, which is not yet released. Until that release, use the direct `requests` examples in the linked API guides.
+The account methods require `pangram-sdk` 1.2.0 or later.
 </Note>
 
 | Method | Guide | Behavior |
@@ -68,7 +68,7 @@ Account reads spend no credits and consume no inference QPS, but share their own
 
 The return types are `AccountBalance`, `AccountUsage`, and `AccountLimits`, all ordinary dictionaries. USD amounts remain decimal strings, including negative balances. Usage covers only the calling key, across products, for the selected UTC month. Limits preserve fractional QPS and `None` when no account QPS limit is configured.
 
-Each method accepts a positive finite keyword-only `timeout`, defaulting to 10 seconds. `get_usage()` accepts a calendar month in `YYYY-MM` form, or `None` for the current UTC month. Future months are rejected by the server.
+Each method accepts a positive finite keyword-only `timeout`, defaulting to 10 seconds. This sets the connection and read-inactivity timeouts, rather than a total request deadline. `get_usage()` accepts a calendar month in `YYYY-MM` form, or `None` for the current UTC month. Future months are rejected by the server.
 
 ### Account read errors
 
@@ -448,7 +448,7 @@ The returned `list[str]` preserves server order and reflects both the account's 
 Use one returned selector as the keyword-only `model` argument on text and bulk requests.
 
 <Warning>
-The `model` argument is temporarily optional for backward compatibility. Omitting it preserves the existing wire payload, selects Pangram's server default, and emits a `DeprecationWarning`. Pass `model="default"` or another value from `list_models()` in new code. The SDK will require explicit model selection after September 30, 2026.
+The `model` argument is temporarily optional for backward compatibility. Omitting it preserves the existing wire payload, selects Pangram's server default, and emits a `DeprecationWarning`. Pass `model="default"` or another value from `list_models()` in new code.
 </Warning>
 
 ---
@@ -954,7 +954,7 @@ The runtime values remain ordinary dictionaries and lists; these types provide s
 ## Deprecated Methods
 
 <Warning>
-The following SDK compatibility methods are deprecated and may be removed on August 1, 2026. Use `predict()` for one-off calls or `submit_bulk()` for asynchronous bulk jobs.
+The following SDK compatibility methods are deprecated. Use `predict()` for one-off calls or `submit_bulk()` for asynchronous bulk jobs.
 </Warning>
 
 ### predict_short() <Badge color="red">Deprecated</Badge>
