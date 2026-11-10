@@ -43,11 +43,20 @@
               "api-reference/introduction",
               "api-reference/models",
               "api-reference/ai-detection",
+              "api-reference/zdr-api",
               "api-reference/image-detection",
               "api-reference/video-detection",
               "api-reference/bulk-api",
               "api-reference/file-external",
               "api-reference/plagiarism-detection"
+            ]
+          },
+          {
+            "group": "Account APIs",
+            "pages": [
+              "api-reference/balance",
+              "api-reference/usage",
+              "api-reference/limits"
             ]
           },
           {

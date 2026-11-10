@@ -1,0 +1,105 @@
+---
+title: "Zero Data Retention"
+description: "Run synchronous text detection with one-time result delivery and transient content handling"
+api: POST https://text-zdr.external-api.pangram.com/
+---
+
+The ZDR text endpoint returns the completed AI detection result in one HTTP request. Submitted text and inference results are handled transiently during processing; the result cannot be retrieved later after it has been consumed.
+
+Authenticate with your existing `x-api-key`. Choose a text model enabled for your account and send its selector explicitly.
+
+<Warning>
+Delivery is at most once. If the connection drops after the server consumes the result, it cannot be recovered. Retrying starts a new analysis and may incur another charge. Do not automatically retry this POST or fall back to the standard prediction endpoint.
+</Warning>
+
+## Request
+
+<ParamField body="text" type="string" required>
+  The text to analyze.
+</ParamField>
+
+<ParamField body="model" type="string">
+  An enabled text model selector, such as `pangram-4`. Send it explicitly in new integrations. The API currently accepts an omitted selector for backward compatibility.
+</ParamField>
+
+The JSON request body must fit within 1 MiB. Dashboard links, webhook delivery, bulk jobs, and end-user email metadata are unsupported. Do not send `public_dashboard_link=true`, `webhook_delivery=true`, or `end_user_email`.
+
+## Examples
+
+<CodeGroup>
+
+```bash cURL
+curl --request POST \
+  --url https://text-zdr.external-api.pangram.com/ \
+  --connect-timeout 10 --max-time 610 \
+  --header "Content-Type: application/json" \
+  --header "x-api-key: $PANGRAM_API_KEY" \
+  --data '{"text": "The text to analyze", "model": "pangram-4"}'
+```
+
+```python Python (requests)
+import os
+import requests
+
+response = requests.post(
+    "https://text-zdr.external-api.pangram.com/",
+    headers={"x-api-key": os.environ["PANGRAM_API_KEY"]},
+    json={"text": "The text to analyze", "model": "pangram-4"},
+    timeout=(10, 610),
+)
+response.raise_for_status()
+result = response.json()
+if result["stage"] != "STAGE_SUCCESS":
+    raise RuntimeError("ZDR analysis did not succeed")
+print(result["prediction_short"])
+```
+
+</CodeGroup>
+
+The Python SDK currently has no native ZDR prediction helper. `Pangram.predict()` uses the standard async API; it does not enable ZDR. The Python example above can be used alongside the SDK.
+
+## Response and timeouts
+
+The response is the terminal result, using the completed [AI detection response fields](/api-reference/ai-detection), including `stage`, `version`, `prediction_short`, and `windows`. Read `version` to identify the model version used. Do not submit a standard task or poll `GET /task/{task_id}` for this request.
+
+Check `stage` as well as the HTTP status: a terminal analysis failure can return `STAGE_FAILED` in an HTTP `200` response. No dashboard link is returned.
+
+Allow a 610-second client timeout. The Python tuple `(10, 610)` sets separate connection and read-inactivity timeouts; it is not a total wall-clock deadline. A server timeout or capacity error can arrive sooner. Do not cache responses or assume a failed connection means the request was not processed.
+
+## Retention scope
+
+During processing, content exists in transient task state and process memory. The application removes task-owned content state as part of the one-time terminal-result handoff. Timeout and cancellation paths attempt cleanup, and expiry bounds abandoned state. A consumed result cannot be replayed.
+
+Billing and operational metadata, such as request identifiers, timestamps, input length, billable units, and cost, may still be retained separately from submitted text and model output. Your application controls its own request logging, result logging, and caching.
+
+## Strict-ZDR accounts
+
+Using this endpoint selects ZDR processing. An account configured with `strict_zdr` additionally requires its keys to use the ZDR endpoint for inference. Standard text and image inference routes reject those keys with HTTP `403` and this message:
+
+```json
+{
+  "detail": "Strict-ZDR billing accounts must use text-zdr.external-api.pangram.com"
+}
+```
+
+Image v1 places that message in `error.error` inside its normal error envelope.
+
+The standard [`GET /models`](/api-reference/models) route and SDK `list_models()` also reject strict-ZDR keys. Use a selector approved for your account, or contact [support@pangram.com](mailto:support@pangram.com) to confirm one. Calling the ZDR endpoint with a regular key does not change that account's strict-ZDR setting.
+
+Strict-ZDR keys can still read [`/balance`](/api-reference/balance), [`/usage`](/api-reference/usage), and [`/limits`](/api-reference/limits) on `https://text.external-api.pangram.com`. Those account routes are not hosted on the ZDR hostname.
+
+## HTTP errors
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Malformed JSON or an invalid request body. |
+| `401` | Missing or invalid API key. |
+| `402` | Insufficient credits. |
+| `403` | The selected model is not enabled for the key. |
+| `413` | Request body exceeds the limit. |
+| `422` | Invalid text/model selector or unsupported ZDR options. |
+| `429` | Submission rate limit exceeded; observe `Retry-After`. |
+| `503` | Adapter capacity or model availability prevents processing. |
+| `504` | The synchronous processing deadline expired. |
+
+An error or timeout does not make a retry of an accepted request idempotent.

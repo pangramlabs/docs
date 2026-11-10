@@ -1,0 +1,57 @@
+---
+title: "QPS Limit"
+description: "Read the billing account's configured inference requests-per-second limit"
+api: GET https://text.external-api.pangram.com/limits
+---
+
+Read the configured inference QPS (requests per second) limit for your key's billing account. Keys on the same account share this limit for each metered endpoint.
+
+This read works with strict-ZDR keys and zero or negative balances. It does not spend credits or consume inference QPS. Responses use `Cache-Control: no-store`.
+
+## Examples
+
+<CodeGroup>
+
+```bash cURL
+curl https://text.external-api.pangram.com/limits \
+  --header "x-api-key: $PANGRAM_API_KEY"
+```
+
+```python Python (requests)
+import os
+import requests
+
+response = requests.get(
+    "https://text.external-api.pangram.com/limits",
+    headers={"x-api-key": os.environ["PANGRAM_API_KEY"]},
+    timeout=(10, 30),
+)
+response.raise_for_status()
+limits = response.json()
+```
+
+</CodeGroup>
+
+The Python SDK currently has no native limits helper. Use this HTTP example alongside the SDK.
+
+## Response
+
+```json
+{"qps_limit": 2.5}
+```
+
+<ResponseField name="qps_limit" type="number | null">
+  Configured inference QPS limit. Fractional values are preserved. `null` means no account QPS limit is configured; other service capacity and protection limits still apply.
+</ResponseField>
+
+This is not a live remaining-request counter or a guarantee of available capacity. Bulk limits and concurrency limits are not returned.
+
+## Read limits and errors
+
+This route shares the independent [account-read budget](/api-reference/balance#read-limits-and-errors) with balance and usage calls. The read budget is separate from the inference QPS value returned here. Respect `Retry-After` on `429`.
+
+| Status | Meaning |
+| --- | --- |
+| `401` | Missing, malformed, revoked, inactive, or otherwise invalid key/account. |
+| `429` | Account-read rate or concurrency limit; observe `Retry-After`. |
+| `503` | Account lookup unavailable or timed out; retry the read later. |

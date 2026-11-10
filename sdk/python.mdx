@@ -39,6 +39,41 @@ Raises `ValueError` if the API key is not provided and not set in the environmen
 
 ---
 
+## ZDR and account APIs
+
+The current Python SDK has no native helpers for the ZDR, balance, usage, or limits endpoints. The linked guides provide complete authenticated `requests` examples that work alongside the SDK; `requests` is already an SDK dependency.
+
+| API | Guide | Behavior |
+| --- | --- | --- |
+| ZDR text analysis | [Zero Data Retention](/api-reference/zdr-api) | One synchronous response with one-time result delivery. `predict()` does not enable ZDR. |
+| `GET /balance` | [Credit Balance](/api-reference/balance) | Account credit balances as USD decimal strings. |
+| `GET /usage` | [Monthly Usage](/api-reference/usage) | Calling key's recorded request count and cost for one UTC month. |
+| `GET /limits` | [QPS Limit](/api-reference/limits) | Account inference `qps_limit`, including fractional values or `null`. |
+
+<Warning>
+For ZDR, use the dedicated endpoint and a model approved for the account. Do not automatically retry a request or fall back to `predict()` after a timeout: the result may be unrecoverable and a retry may incur another charge. Strict-ZDR keys cannot use `list_models()` or standard text/image inference routes; account reads remain available.
+</Warning>
+
+### Account read example
+
+```python
+import os
+from decimal import Decimal
+import requests
+
+response = requests.get(
+    "https://text.external-api.pangram.com/balance",
+    headers={"x-api-key": os.environ["PANGRAM_API_KEY"]},
+    timeout=(10, 30),
+)
+response.raise_for_status()
+available_usd = Decimal(response.json()["available_balance_usd"])
+```
+
+Account reads spend no credits and consume no inference QPS, but share their own read limits. Honor `Retry-After` on HTTP `429`. `/balance` reports available credits; `/usage` reports recorded consumption.
+
+## Native SDK methods
+
 ### predict_image()
 
 Submit one image and wait for its analysis.

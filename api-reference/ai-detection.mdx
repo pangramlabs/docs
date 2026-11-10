@@ -8,6 +8,8 @@ For more information on billing units and pricing, check our [pricing page](http
 
 <Badge color="green">Current</Badge>
 
+For zero data retention, use the dedicated [ZDR endpoint](/api-reference/zdr-api). Strict-ZDR keys cannot use the standard task or model-catalog routes on this page.
+
 <Update label="Async inference API" description="Current version">
   The current AI detection API creates an async task and returns a task ID. Poll the task endpoint until it reaches `STAGE_SUCCESS` or `STAGE_FAILED`.
 </Update>
@@ -85,7 +87,7 @@ result = pangram_client.predict(
 
 | Status Code | Description |
 |---|---|
-| `403 Forbidden` | The requested model is not enabled for the API key. |
+| `403 Forbidden` | The requested model is not enabled for the key, or the account requires the ZDR endpoint. |
 | `422 Unprocessable Entity` | The model selector is malformed or unknown. |
 | `503 Service Unavailable` | The requested model is temporarily unavailable. |
 
