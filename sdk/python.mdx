@@ -39,6 +39,35 @@ Raises `ValueError` if the API key is not provided and not set in the environmen
 
 ---
 
+## Account APIs
+
+Requires `pangram-sdk` 1.2.0 or later.
+
+| Method | API reference |
+| --- | --- |
+| `get_balance(*, timeout=10)` | [Account credit balance](/api-reference/balance) |
+| `get_usage(month=None, *, timeout=10)` | [API key usage for a UTC month](/api-reference/usage) |
+| `get_limits(*, timeout=10)` | [Account QPS limit](/api-reference/limits) |
+
+```python
+from decimal import Decimal
+from pangram import Pangram
+
+client = Pangram()  # Reads PANGRAM_API_KEY.
+balance = client.get_balance()
+available_usd = Decimal(balance["available_balance_usd"])
+usage = client.get_usage()  # Current UTC month; use month="2026-10" for another month.
+limits = client.get_limits()
+```
+
+### Account read errors
+
+Each method accepts a positive finite keyword-only `timeout`, defaulting to 10 seconds for connection establishment and read inactivity. This is not a total request deadline. Requests disable redirects and do not automatically retry.
+
+Invalid input raises `ValueError`. HTTP, transport, and malformed-response failures raise `PangramRequestError`, a `ValueError` subclass exported from `pangram`. Its `status_code` identifies HTTP errors and may be `None` for transport or response-format failures. Its `retry_after` preserves a numeric `Retry-After` delay in seconds; wait for that delay before retrying a read after HTTP `429`.
+
+## Native SDK methods
+
 ### predict_image()
 
 Submit one image and wait for its analysis.
@@ -409,7 +438,7 @@ The returned `list[str]` preserves server order and reflects both the account's 
 Use one returned selector as the keyword-only `model` argument on text and bulk requests.
 
 <Warning>
-The `model` argument is temporarily optional for backward compatibility. Omitting it preserves the existing wire payload, selects Pangram's server default, and emits a `DeprecationWarning`. Pass `model="default"` or another value from `list_models()` in new code. The SDK will require explicit model selection after September 30, 2026.
+The `model` argument is temporarily optional for backward compatibility. Omitting it preserves the existing wire payload, selects Pangram's server default, and emits a `DeprecationWarning`. Pass `model="default"` or another value from `list_models()` in new code.
 </Warning>
 
 ---
@@ -884,6 +913,9 @@ The SDK ships a `py.typed` marker and exports its public `TypedDict` contracts f
 
 ```python
 from pangram import (
+    AccountBalance,
+    AccountLimits,
+    AccountUsage,
     BulkResultItem,
     BulkResultMetadata,
     BulkResults,
@@ -895,6 +927,9 @@ from pangram import (
 
 | Type | Represents |
 |---|---|
+| `AccountBalance` | Account USD credit balances as decimal strings (SDK 1.2.0). |
+| `AccountUsage` | Calling key's monthly recorded request count and USD cost (SDK 1.2.0). |
+| `AccountLimits` | Configured account QPS, including fractional values or `None` (SDK 1.2.0). |
 | `PredictionWindow` | One classified window, including optional Pangram 4 humanizer fields. |
 | `PredictionResult` | A successful text prediction. |
 | `BulkResultMetadata` | Status metadata shared by successful and failed bulk items. |
@@ -909,7 +944,7 @@ The runtime values remain ordinary dictionaries and lists; these types provide s
 ## Deprecated Methods
 
 <Warning>
-The following SDK compatibility methods are deprecated and may be removed on August 1, 2026. Use `predict()` for one-off calls or `submit_bulk()` for asynchronous bulk jobs.
+The following SDK compatibility methods are deprecated. Use `predict()` for one-off calls or `submit_bulk()` for asynchronous bulk jobs.
 </Warning>
 
 ### predict_short() <Badge color="red">Deprecated</Badge>

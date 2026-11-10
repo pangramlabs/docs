@@ -1,0 +1,70 @@
+---
+title: "Monthly Usage"
+description: "Read one API key's recorded billable request count and cost for a UTC month"
+api: GET https://text.external-api.pangram.com/usage
+---
+
+Return recorded external billable usage for the **calling API key**, across products, for one UTC calendar month. Other keys on the same billing account have separate histories. Replacing a key does not transfer the old key's usage history.
+
+This read works with zero or negative balances. It does not spend credits or consume inference QPS. Responses use `Cache-Control: no-store`.
+
+## Query parameter
+
+<ParamField query="month" type="string">
+  One UTC calendar month in `YYYY-MM` form, such as `2026-10`. Defaults to the current UTC month and includes transactions committed so far. Future months are rejected.
+</ParamField>
+
+Use `month` to select a UTC calendar month. Use the dashboard for account-wide history.
+
+## Examples
+
+<CodeGroup>
+
+```bash cURL
+curl 'https://text.external-api.pangram.com/usage?month=2026-10' \
+  --header "x-api-key: $PANGRAM_API_KEY"
+```
+
+```python Python SDK (1.2.0+)
+from pangram import Pangram
+
+client = Pangram()  # Reads PANGRAM_API_KEY.
+usage = client.get_usage(month="2026-10")  # Omit month for the current UTC month.
+```
+
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "month": "2026-10",
+  "total_requests": 10,
+  "total_cost_usd": "0.750000"
+}
+```
+
+<ResponseField name="month" type="string">
+  The selected UTC calendar month in `YYYY-MM` form.
+</ResponseField>
+
+<ResponseField name="total_requests" type="integer">
+  Count of recorded billable requests across products.
+</ResponseField>
+
+<ResponseField name="total_cost_usd" type="string">
+  USD decimal string summing the recorded charges for those requests.
+</ResponseField>
+
+An unused month returns zero requests and `"0.000000"` cost. These values represent recorded credit consumption. Use [`/balance`](/api-reference/balance) for the available credit balance and decimal arithmetic for USD amounts.
+
+## Read limits and errors
+
+This route shares the independent [account-read budget](/api-reference/balance#read-limits-and-errors) with balance and limits calls. Respect `Retry-After` on `429`.
+
+| Status | Meaning |
+| --- | --- |
+| `401` | Missing, malformed, revoked, inactive, or otherwise invalid key/account. |
+| `422` | Invalid/future month or unsupported query parameter. |
+| `429` | Account-read rate or concurrency limit; observe `Retry-After`. |
+| `503` | Account lookup unavailable or timed out; retry the read later. |

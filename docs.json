@@ -51,6 +51,14 @@
             ]
           },
           {
+            "group": "Account APIs",
+            "pages": [
+              "api-reference/balance",
+              "api-reference/usage",
+              "api-reference/limits"
+            ]
+          },
+          {
             "group": "Deprecated",
             "pages": [
               "api-reference/deprecated-endpoints"
