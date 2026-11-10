@@ -41,40 +41,30 @@ Raises `ValueError` if the API key is not provided and not set in the environmen
 
 ## Account APIs
 
-<Note>
-The account methods require `pangram-sdk` 1.2.0 or later.
-</Note>
+Requires `pangram-sdk` 1.2.0 or later.
 
-| Method | Guide | Behavior |
-| --- | --- | --- |
-| `get_balance(*, timeout=10)` | [Credit Balance](/api-reference/balance) | Account credit balances as USD decimal strings. |
-| `get_usage(month=None, *, timeout=10)` | [Monthly Usage](/api-reference/usage) | Calling key's recorded request count and cost for one UTC month. |
-| `get_limits(*, timeout=10)` | [QPS Limit](/api-reference/limits) | Account inference `qps_limit`, including fractional values or `None`. |
-
-### Account read methods
+| Method | API reference |
+| --- | --- |
+| `get_balance(*, timeout=10)` | [Account credit balance](/api-reference/balance) |
+| `get_usage(month=None, *, timeout=10)` | [API key usage for a UTC month](/api-reference/usage) |
+| `get_limits(*, timeout=10)` | [Account QPS limit](/api-reference/limits) |
 
 ```python
 from decimal import Decimal
 from pangram import Pangram
 
-client = Pangram()
+client = Pangram()  # Reads PANGRAM_API_KEY.
 balance = client.get_balance()
 available_usd = Decimal(balance["available_balance_usd"])
-usage = client.get_usage(month="2026-10")  # Omit month for the current UTC month.
+usage = client.get_usage()  # Current UTC month; use month="2026-10" for another month.
 limits = client.get_limits()
 ```
 
-Account reads spend no credits and consume no inference QPS, but share their own read limits. Honor `Retry-After` on HTTP `429`. `/balance` reports available credits; `/usage` reports recorded consumption.
-
-The return types are `AccountBalance`, `AccountUsage`, and `AccountLimits`, all ordinary dictionaries. USD amounts remain decimal strings, including negative balances. Usage covers only the calling key, across products, for the selected UTC month. Limits preserve fractional QPS and `None` when no account QPS limit is configured.
-
-Each method accepts a positive finite keyword-only `timeout`, defaulting to 10 seconds. This sets the connection and read-inactivity timeouts, rather than a total request deadline. `get_usage()` accepts a calendar month in `YYYY-MM` form, or `None` for the current UTC month. Future months are rejected by the server.
-
 ### Account read errors
 
-Invalid local input raises `ValueError`. HTTP, transport, and malformed-response failures raise `PangramRequestError`, a `ValueError` subclass exported from `pangram`. The exception exposes `status_code` and `retry_after` in seconds, preserving numeric `Retry-After` headers. If no HTTP error is available, `status_code` may be `None`.
+Each method accepts a positive finite keyword-only `timeout`, defaulting to 10 seconds for connection establishment and read inactivity. This is not a total request deadline. Requests disable redirects and do not automatically retry.
 
-Account reads make one request, disable redirects, and do not automatically retry. On HTTP `429`, wait for `retry_after` before making another read.
+Invalid input raises `ValueError`. HTTP, transport, and malformed-response failures raise `PangramRequestError`, a `ValueError` subclass exported from `pangram`. Its `status_code` identifies HTTP errors and may be `None` for transport or response-format failures. Its `retry_after` preserves a numeric `Retry-After` delay in seconds; wait for that delay before retrying a read after HTTP `429`.
 
 ## Native SDK methods
 

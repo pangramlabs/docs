@@ -17,31 +17,14 @@ curl https://text.external-api.pangram.com/limits \
   --header "x-api-key: $PANGRAM_API_KEY"
 ```
 
-```python Python SDK (1.2.0)
+```python Python SDK (1.2.0+)
 from pangram import Pangram
 
 client = Pangram()  # Reads PANGRAM_API_KEY.
 limits = client.get_limits()
 ```
 
-```python Python (requests)
-import os
-import requests
-
-response = requests.get(
-    "https://text.external-api.pangram.com/limits",
-    headers={"x-api-key": os.environ["PANGRAM_API_KEY"]},
-    timeout=(10, 30),
-)
-response.raise_for_status()
-limits = response.json()
-```
-
 </CodeGroup>
-
-<Note>
-`get_limits(*, timeout=10)` requires SDK 1.2.0 or later and returns an `AccountLimits` dictionary, preserving fractional QPS and `None`. See [SDK error handling](/sdk/python#account-read-errors).
-</Note>
 
 ## Response
 

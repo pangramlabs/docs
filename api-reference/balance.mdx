@@ -17,7 +17,7 @@ curl https://text.external-api.pangram.com/balance \
   --header "x-api-key: $PANGRAM_API_KEY"
 ```
 
-```python Python SDK (1.2.0)
+```python Python SDK (1.2.0+)
 from decimal import Decimal
 from pangram import Pangram
 
@@ -26,26 +26,7 @@ balance = client.get_balance()
 available_usd = Decimal(balance["available_balance_usd"])
 ```
 
-```python Python (requests)
-import os
-from decimal import Decimal
-import requests
-
-response = requests.get(
-    "https://text.external-api.pangram.com/balance",
-    headers={"x-api-key": os.environ["PANGRAM_API_KEY"]},
-    timeout=(10, 30),
-)
-response.raise_for_status()
-balance = response.json()
-available_usd = Decimal(balance["available_balance_usd"])
-```
-
 </CodeGroup>
-
-<Note>
-`get_balance(*, timeout=10)` requires SDK 1.2.0 or later and returns an `AccountBalance` dictionary. See [SDK error handling](/sdk/python#account-read-errors).
-</Note>
 
 ## Response
 
